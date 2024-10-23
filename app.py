@@ -17,13 +17,20 @@ app = Flask(__name__, static_url_path='/pogo/static')
 # Add secret key for session protection (important for OAuth)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key')  # Replace with a secure key in production
 
-# Configure PostgreSQL database (handling deprecated 'postgres://' URLs)
-uri = os.getenv("DATABASE_URL")
-if not uri:
-    raise ValueError("DATABASE_URL is not set in environment variables")
-if uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = uri
+# Determine the environment (development or production)
+ENV = os.getenv("FLASK_ENV", "production")  # Default to production if not set
+
+# Configure the database based on environment
+if ENV == "development":
+    # Use SQLite for local development
+    db_path = os.getenv("DATABASE_URL", "sqlite:///Users/bradyespey/Projects/GitHub/PoGO/pogo.db")
+else:
+    # Use PostgreSQL for production (Heroku)
+    db_path = os.getenv("DATABASE_URL")
+    if db_path and db_path.startswith("postgres://"):
+        db_path = db_path.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database

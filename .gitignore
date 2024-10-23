@@ -51,3 +51,6 @@ env/
 
 # Ignore scan.txt files
 *scan.txt
+
+# Ignore local SQLite database files
+*.db
