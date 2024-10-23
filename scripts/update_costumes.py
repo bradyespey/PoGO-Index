@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-# Add the project root directory to the system path
+# Add the project root directory to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Now, you can import app and models after sys.path is correctly set

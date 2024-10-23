@@ -36,10 +36,9 @@ SERVICE_ACCOUNT_INFO = {
 creds = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=SCOPES)
 drive_service = build('drive', 'v3', credentials=creds)
 
-
 def download_latest_csv_from_drive():
     """Download the latest CSV file from Google Drive"""
-    print(f"Using folder ID: {FOLDER_ID}")  # Debug: Check the folder ID used
+    print(f"Using folder ID: {FOLDER_ID}")
 
     results = drive_service.files().list(
         q=f"'{FOLDER_ID}' in parents and mimeType='text/csv'",
@@ -47,8 +46,6 @@ def download_latest_csv_from_drive():
         pageSize=1,
         fields="files(id, name)"
     ).execute()
-
-    print(f"API results: {results}")  # Debug: See what the API is returning
 
     if 'files' not in results or not results['files']:
         raise FileNotFoundError("No CSV file found in the folder.")
@@ -89,7 +86,7 @@ def import_poke_genie_data(app_context):
             csvfile.seek(0)
             next(reader)  # Skip header again after reset
 
-            count_inserted, count_updated, count_skipped = 0, 0, 0
+            count_inserted, count_skipped = 0, 0
 
             for idx, row in enumerate(reader):
                 index = int(row[0])
@@ -118,7 +115,6 @@ def import_poke_genie_data(app_context):
             print(f"Total Poke Genie entries processed: {total_entries}")
             print(f"Entries added: {count_inserted}")
             print(f"Entries skipped: {count_skipped}")
-
 
 if __name__ == "__main__":
     from app import app

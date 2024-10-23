@@ -26,7 +26,7 @@ def fetch_forms_data(app_context):
         # Parse the forms data
         forms_data = []
 
-        # Add parsing logic based on HTML structure here, and populate forms_data
+        # Add parsing logic based on HTML structure, and populate forms_data
         # For this example, let's assume we extract dex_number, name, form
         # forms_data.append((dex_number, name, form))
 
@@ -36,6 +36,7 @@ def fetch_forms_data(app_context):
             existing_form = Form.query.filter_by(dex_number=dex_number, name=name).first()
 
             if existing_form:
+                # Update the record if form has changed
                 if existing_form.form != form:
                     existing_form.form = form
                     db.session.commit()
@@ -43,12 +44,13 @@ def fetch_forms_data(app_context):
                 else:
                     count_skipped += 1
             else:
+                # Insert new entry
                 new_form = Form(dex_number=dex_number, name=name, form=form)
                 db.session.add(new_form)
                 db.session.commit()
                 count_inserted += 1
 
-        print(f"Total Forms processed: {len(forms_data)}")
+        print(f"Finished processing {len(forms_data)} forms.")
         print(f"Forms added: {count_inserted}")
         print(f"Forms updated: {count_updated}")
         print(f"Forms skipped: {count_skipped}")
