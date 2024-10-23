@@ -23,12 +23,20 @@ def fetch_forms_data(app_context):
         soup = BeautifulSoup(response.text, 'html.parser')
         print(f"Fetched data in {time.time() - start_time:.2f} seconds")
 
-        # Parse the forms data
+        # Parse the forms data based on the HTML structure
         forms_data = []
+        tables = soup.find_all('table')
 
-        # Add parsing logic based on HTML structure, and populate forms_data
-        # For this example, let's assume we extract dex_number, name, form
-        # forms_data.append((dex_number, name, form))
+        # Iterate through tables and extract relevant data (modify logic if structure changes)
+        for table in tables:
+            rows = table.find_all('tr')[1:]  # Skip the header row
+            for row in rows:
+                columns = row.find_all('td')
+                if len(columns) >= 3:  # Ensure there are enough columns
+                    dex_number = int(columns[0].get_text(strip=True).replace('#', ''))  # Dex number
+                    name = columns[1].get_text(strip=True)  # Pokémon name
+                    form = columns[2].get_text(strip=True)  # Pokémon form
+                    forms_data.append((dex_number, name, form))
 
         count_inserted, count_updated, count_skipped = 0, 0, 0
 
@@ -36,7 +44,7 @@ def fetch_forms_data(app_context):
             existing_form = Form.query.filter_by(dex_number=dex_number, name=name).first()
 
             if existing_form:
-                # Update the record if form has changed
+                # Update the record if the form has changed
                 if existing_form.form != form:
                     existing_form.form = form
                     db.session.commit()

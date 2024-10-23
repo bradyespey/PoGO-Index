@@ -11,8 +11,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env
 load_dotenv()
 
-# Initialize Flask app
-app = Flask(__name__, static_url_path='/pogo/static')
+# Initialize Flask app with static folder configuration
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # Add secret key for session protection (important for OAuth)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key')  # Replace with a secure key in production

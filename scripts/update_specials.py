@@ -56,7 +56,7 @@ def fetch_and_update_specials(app_context):
                     db.session.commit()
                     count_inserted += 1
 
-            # Log progress every 1 category
+            # Log progress every category
             print(f"Processed category {idx + 1}/{total_categories}: {type_}")
 
         # Final output

@@ -53,6 +53,7 @@ def fetch_shiny_pokemon_data(app_context):
                 else:
                     count_skipped += 1
             else:
+                # Insert new Shiny Pokémon
                 new_shiny = ShinyPokemon(dex_number=dex_number, name=name, method=method)
                 db.session.add(new_shiny)
                 db.session.commit()

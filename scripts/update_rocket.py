@@ -23,9 +23,9 @@ def fetch_rocket_pokemon_data(app_context):
         soup = BeautifulSoup(response.text, 'html.parser')
         print(f"Fetched data in {time.time() - start_time:.2f} seconds")
 
-        # Parse the HTML table
+        # Parse the HTML table (skip the header)
         table = soup.find_all("table")[1]
-        rows = table.find_all("tr")[1:]  # Skip the header row
+        rows = table.find_all("tr")[1:]
         total_rockets = len(rows)
         print(f"Found {total_rockets} Team Rocket Pokémon in the data.")
 
@@ -42,7 +42,7 @@ def fetch_rocket_pokemon_data(app_context):
             name = cols[2].get_text(strip=True)
             method = cols[4].get_text(strip=True)
 
-            # Check if the Rocket entry already exists
+            # Check if the Rocket Pokémon entry already exists
             rocket_pokemon = Rocket.query.filter(Rocket.dex_number == dex_number, Rocket.name == name).first()
 
             if rocket_pokemon:
@@ -53,12 +53,13 @@ def fetch_rocket_pokemon_data(app_context):
                 else:
                     count_skipped += 1
             else:
+                # Insert new Rocket Pokémon
                 new_rocket = Rocket(dex_number=dex_number, name=name, method=method)
                 db.session.add(new_rocket)
                 db.session.commit()
                 count_inserted += 1
 
-            # Log progress
+            # Log progress every 10 entries
             if idx % 10 == 0:
                 print(f"Processing Team Rocket Pokémon {idx + 1}/{total_rockets}...")
 

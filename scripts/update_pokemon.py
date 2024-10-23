@@ -33,50 +33,58 @@ def fetch_pokemon_data(app_context):
         total_pokemon = len(rows)
         print(f"Found {total_pokemon} Pokémon in the data.")
 
-        image_dir = os.path.join('static', 'images', 'mons')
+        # Define the image directory path (local for checking, relative for storing in DB)
+        local_image_dir = '/Users/bradyespey/Projects/GitHub/PoGO/static/images/mons'  # Local path for dev
+        relative_image_url_base = '/static/images/mons'  # Relative path to store in DB
+
         count_inserted, count_updated, count_skipped, count_with_images = 0, 0, 0, 0
 
         # Process each Pokémon
         for idx, row in enumerate(rows):
             cols = row.find_all("td")
-            dex_number = int(cols[0].text.strip())
+            dex_number = int(cols[0].text.strip())  # Dex number as integer
             name = cols[1].text.strip().replace("♀", "-f").replace("♂", "-m")
-            type_ = " ".join([t.text for t in cols[2].find_all("a")])
+            type_ = " ".join([t.text for t in cols[2].find_all("a")])  # Pokémon type
 
+            # Skip unwanted forms
             if any(form in name for form in FORMS_TO_SKIP):
                 continue
 
+            # Construct image filename
             image_filename = f"{name.lower().replace(' ', '-').replace(':', '')}.png"
-            image_path = os.path.join(image_dir, image_filename)
-            local_image_url = f"/static/images/mons/{image_filename}" if os.path.exists(image_path) else None
+            local_image_path = os.path.join(local_image_dir, image_filename)
+            relative_image_url = f"{relative_image_url_base}/{image_filename}"
 
-            if local_image_url:
+            # Check if the image exists locally for dev
+            image_url_to_store = relative_image_url if os.path.exists(local_image_path) else None
+
+            if image_url_to_store:
                 count_with_images += 1
 
             # Check if Pokémon already exists in the database
             pokemon = Pokemon.query.filter_by(id=dex_number).first()
 
             if pokemon:
-                # Pokémon already exists, update image if needed and skip
-                if pokemon.image_url != local_image_url:
-                    pokemon.image_url = local_image_url
+                # Pokémon already exists, update image if needed
+                if pokemon.image_url != image_url_to_store:
+                    pokemon.image_url = image_url_to_store
                     db.session.commit()
                     count_updated += 1
                 else:
                     count_skipped += 1
             else:
-                # Insert new Pokémon
+                # Insert new Pokémon entry
                 new_pokemon = Pokemon(
                     id=dex_number,
                     name=name,
                     type=type_,
-                    image_url=local_image_url,
+                    image_url=image_url_to_store,
                 )
                 db.session.add(new_pokemon)
                 db.session.commit()
                 count_inserted += 1
 
-            # Log progress
+            # Log progress every 10 entries
             if idx % 10 == 0:
                 print(f"Processing Pokémon {idx + 1}/{total_pokemon}...")
 
