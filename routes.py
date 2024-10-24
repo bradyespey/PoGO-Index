@@ -315,7 +315,7 @@ def init_routes(app, google):
     @app.route('/pogo/update-now', methods=['POST'])
     @requires_auth
     def update_now():
-        from update.update_pokemon import fetch_pokemon_data  # Move import here
+        from scripts.update_pokemon import fetch_pokemon_data  # Move import here
         with app.app_context():
             fetch_pokemon_data()
         return redirect(url_for('pokemon'))
@@ -324,7 +324,7 @@ def init_routes(app, google):
     @app.route('/pogo/update-poke-genie', methods=['POST'])
     @requires_auth
     def update_poke_genie():
-        from update.update_poke_genie import import_poke_genie_data  # Move import here
+        from scripts.update_poke_genie import import_poke_genie_data  # Move import here
         with app.app_context():
             import_poke_genie_data()
         return redirect(url_for('poke_genie'))
@@ -333,7 +333,7 @@ def init_routes(app, google):
     @app.route('/pogo/update-shinies', methods=['POST'])
     @requires_auth
     def update_shinies():
-        from update.update_shinies import fetch_shiny_pokemon_data  # Move import here
+        from scripts.update_shinies import fetch_shiny_pokemon_data  # Move import here
         with app.app_context():
             fetch_shiny_pokemon_data()
         return redirect(url_for('shinies'))
@@ -342,7 +342,7 @@ def init_routes(app, google):
     @app.route('/pogo/update-specials', methods=['POST'])
     @requires_auth
     def update_specials():
-        from update.update_specials import fetch_and_update_specials  # Move import here
+        from scripts.update_specials import fetch_and_update_specials  # Move import here
         with app.app_context():
             fetch_and_update_specials()
         return redirect(url_for('specials'))
@@ -351,7 +351,7 @@ def init_routes(app, google):
     @app.route('/pogo/update-rocket', methods=['POST'])
     @requires_auth
     def update_rocket():
-        from update.update_rocket import fetch_rocket_pokemon_data  # Move import here
+        from scripts.update_rocket import fetch_rocket_pokemon_data  # Move import here
         with app.app_context():
             fetch_rocket_pokemon_data()
         return redirect(url_for('rocket'))

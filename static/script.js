@@ -123,6 +123,7 @@ $(document).ready(function () {
     // Function to initialize all tables
     function initializeAllTables() {
         // Initialize Pokemon Table
+        console.log("Initializing Pokémon Table");
         window.pokemonTable = initializeDataTable({
             tableSelector: '#pokemonTable',
             responsive: true,
@@ -307,6 +308,7 @@ $(document).ready(function () {
         });
 
         // Initialize Costumes Table
+        console.log("Initializing Pokémon Table");
         window.costumesTable = initializeDataTable({
             tableSelector: '#costumesTable',
             paging: true,

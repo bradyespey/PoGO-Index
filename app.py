@@ -1,3 +1,4 @@
+import sys
 import os
 import json
 from flask import Flask
@@ -23,7 +24,7 @@ ENV = os.getenv("FLASK_ENV", "production")  # Default to production if not set
 # Configure the database based on environment
 if ENV == "development":
     # Use SQLite for local development
-    db_path = os.getenv("DATABASE_URL", "sqlite:///Users/bradyespey/Projects/GitHub/PoGO/pogo.db")
+    db_path = os.getenv("DATABASE_URL", "sqlite:///pogo.db")
 else:
     # Use PostgreSQL for production (Heroku)
     db_path = os.getenv("DATABASE_URL")
@@ -48,7 +49,7 @@ google = oauth.register(
     access_token_url='https://oauth2.googleapis.com/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    redirect_uri='https://theespeys.com/pogo/oauth2callback',
+    redirect_uri=os.getenv('REDIRECT_URIS'),
     client_kwargs={'scope': 'openid profile email'}
 )
 
