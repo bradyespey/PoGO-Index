@@ -2,6 +2,20 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+# User Model
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    google_id = db.Column(db.String(255), unique=True)
+    name = db.Column(db.String(255))
+    email = db.Column(db.String(255), unique=True)
+
+    # Relationship to OwnedPokemon
+    owned_pokemon = db.relationship('OwnedPokemon', backref='user', lazy=True)
+
+    def __repr__(self):
+        return f"<User {self.name}>"
+
 # Pokémon Model
 class Pokemon(db.Model):
     __tablename__ = 'pokemon'
@@ -10,8 +24,23 @@ class Pokemon(db.Model):
     type = db.Column(db.String(50))
     image_url = db.Column(db.String(255))
 
+    # Relationship to OwnedPokemon
+    owners = db.relationship('OwnedPokemon', backref='pokemon', lazy=True)
+
     def __repr__(self):
         return f"<Pokemon {self.id} - {self.name}>"
+
+# Association Table for User-Pokemon Ownership
+class OwnedPokemon(db.Model):
+    __tablename__ = 'owned_pokemon'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    pokemon_id = db.Column(db.Integer, db.ForeignKey('pokemon.id'), nullable=False)
+    have_living_dex = db.Column(db.Boolean, default=False)
+    need_on_ipad = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<OwnedPokemon User {self.user_id} - Pokemon {self.pokemon_id}>"
 
 # Poke Genie Entry Model
 class PokeGenieEntry(db.Model):
