@@ -40,21 +40,33 @@ db.init_app(app)
 # Set up database migrations
 migrate = Migrate(app, db)
 
+# OAuth configuration with dynamic redirect URI based on environment
+if ENV == "development":
+    redirect_uri = os.getenv('DEV_REDIRECT_URI')
+else:
+    redirect_uri = os.getenv('PROD_REDIRECT_URI')
+
 # OAuth configuration
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    client_id=os.getenv('OAUTH_CLIENT_ID'),
+    client_secret=os.getenv('OAUTH_CLIENT_SECRET'),
     access_token_url='https://oauth2.googleapis.com/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    redirect_uri=os.getenv('REDIRECT_URIS'),
+    redirect_uri=redirect_uri,  # Correct redirect_uri set here
     client_kwargs={'scope': 'openid profile email'}
 )
 
+# Debug the redirect_uri being used
+print(f"Redirect URI being used: {redirect_uri}")
+
+# Debug the redirect_uri being used
+print(f"Redirect URI being used: {os.getenv('REDIRECT_URIS')}")
+
 # Ensure that OAuth environment variables are set
-if not os.getenv('GOOGLE_CLIENT_ID') or not os.getenv('GOOGLE_CLIENT_SECRET'):
+if not os.getenv('OAUTH_CLIENT_ID') or not os.getenv('OAUTH_CLIENT_SECRET'):
     raise ValueError("Google OAuth credentials are not set in environment variables")
 
 # Initialize application routes

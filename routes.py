@@ -24,7 +24,7 @@ def init_routes(app, google):
 
     ### Public Routes ###
 
-     # Info page route
+    # Info page route
     @app.route('/')
     @app.route('/pogo')
     @app.route('/pogo/info')
@@ -282,28 +282,32 @@ def init_routes(app, google):
             edit_mode = session.get('edit_mode', False)
             return redirect(next_url)
 
-        redirect_uri = url_for('authorize', _external=True, _scheme='https')
         next_url = request.args.get('next', url_for('info_page'))
         edit_mode = 'edit=true' in request.args
         session['edit_mode'] = edit_mode
         session['next_url'] = next_url
-        return google.authorize_redirect(redirect_uri)
+        # Remove redirect_uri parameter
+        return google.authorize_redirect()
 
-    # OAuth2 callback
+    # OAuth2 callback route after user authenticates
     @app.route('/pogo/oauth2callback')
     def authorize():
         token = google.authorize_access_token()
         if token is None:
             return "Authorization failed.", 400
-        session['user'] = token
+        session['user'] = token  # Save user token in session
+
+        # Get the next URL and edit mode from the session
         next_url = session.pop('next_url', url_for('info_page'))
         edit_mode = session.pop('edit_mode', False)
+
+        # Append 'edit=true' if in edit mode and it's not already in the URL
         if edit_mode and 'edit=true' not in next_url:
             separator = '&' if '?' in next_url else '?'
             next_url += f"{separator}edit=true"
         return redirect(next_url)
 
-    # Logout route
+    # Logout route to clear the session
     @app.route('/pogo/logout')
     def logout():
         session.pop('user', None)
