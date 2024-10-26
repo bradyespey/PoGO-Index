@@ -173,7 +173,7 @@ $(document).ready(function () {
                 {
                     targets: [10, 11, 12], // Hide the Legendary, Mythical, and Ultra Beast columns
                     visible: false,
-                    searchable: true
+                    searchable: true  // Ensure these hidden columns are searchable
                 }
             ],
             extraFilters: [

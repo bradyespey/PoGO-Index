@@ -4,7 +4,7 @@ import json
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
-from models import db
+from models import db, User, Pokemon, OwnedPokemon, PokeGenieEntry, ShinyPokemon, SpecialsPokemon, Costume, Form, Rocket, Note  # Import all models
 from routes import init_routes
 from flask_migrate import Migrate
 from dotenv import load_dotenv

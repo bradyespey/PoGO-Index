@@ -80,8 +80,11 @@ def fetch_costume_data(app_context):
         count_inserted, count_updated, count_skipped = 0, 0, 0
 
         for idx, (dex_number, name, costume, first_appearance) in enumerate(costumes_data):
+            # Default user_id (you can replace this with actual user logic)
+            user_id = 1  # Assign the appropriate user_id based on your requirements
+
             # Check if the costume entry already exists in the database
-            existing_costume = Costume.query.filter_by(name=name).first()
+            existing_costume = Costume.query.filter_by(name=name, user_id=user_id).first()
 
             if existing_costume:
                 # Update the existing costume entry if data has changed
@@ -94,7 +97,7 @@ def fetch_costume_data(app_context):
                     count_skipped += 1
             else:
                 # Insert a new costume entry
-                new_costume = Costume(dex_number=dex_number, name=name, costume=costume, first_appearance=first_appearance)
+                new_costume = Costume(dex_number=dex_number, name=name, costume=costume, first_appearance=first_appearance, user_id=user_id)
                 db.session.add(new_costume)
                 db.session.commit()
                 count_inserted += 1

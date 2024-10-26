@@ -11,9 +11,9 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from app import app, db
 from models import SpecialsPokemon
 
-def fetch_and_update_specials(app_context):
+def fetch_and_update_specials(app_context, user_id):
     with app_context:
-        print("Fetching and updating Special Pokémon data...")
+        print(f"Fetching and updating Special Pokémon data for user {user_id}...")
 
         url = "https://gist.githubusercontent.com/Lusamine/a8604135b89dcfa840c61900c43df569/raw/7cdd446d7d13c9ea8cd385d630b29ceb550a1009/SV%25203.0.1%2520Legendary,%2520Mythical,%2520Sublegendary,%2520Ultra%2520Beast,%2520Paradox%2520Lists"
         start_time = time.time()
@@ -45,13 +45,14 @@ def fetch_and_update_specials(app_context):
                 dex_number = int(line.split(":")[0].strip().replace("#", ""))
                 name = line.split(":")[1].split("--")[0].strip()
 
-                # Check if the Special entry already exists
-                special_pokemon = SpecialsPokemon.query.filter_by(dex_number=dex_number, name=name).first()
+                # Check if the Special entry already exists for this user
+                special_pokemon = SpecialsPokemon.query.filter_by(dex_number=dex_number, name=name, user_id=user_id).first()
 
                 if special_pokemon:
                     count_skipped += 1
                 else:
-                    new_special = SpecialsPokemon(dex_number=dex_number, name=name, type=type_)
+                    # Insert new Special Pokémon for this user
+                    new_special = SpecialsPokemon(dex_number=dex_number, name=name, type=type_, user_id=user_id)
                     db.session.add(new_special)
                     db.session.commit()
                     count_inserted += 1
@@ -60,11 +61,12 @@ def fetch_and_update_specials(app_context):
             print(f"Processed category {idx + 1}/{total_categories}: {type_}")
 
         # Final output
-        print(f"Finished processing Special Pokémon.")
+        print(f"Finished processing Special Pokémon for user {user_id}.")
         print(f"Total Special Pokémon added: {count_inserted}")
         print(f"Total Special Pokémon skipped (already exist): {count_skipped}")
 
 if __name__ == "__main__":
     from app import app
     with app.app_context():
-        fetch_and_update_specials(app.app_context())
+        user_id = 1  # Replace with the actual user_id you want to process
+        fetch_and_update_specials(app.app_context(), user_id)

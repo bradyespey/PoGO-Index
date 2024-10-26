@@ -42,8 +42,11 @@ def fetch_rocket_pokemon_data(app_context):
             name = cols[2].get_text(strip=True)
             method = cols[4].get_text(strip=True)
 
+            # Default user_id (replace this with actual user logic)
+            user_id = 1  # Assign the appropriate user_id
+
             # Check if the Rocket Pokémon entry already exists
-            rocket_pokemon = Rocket.query.filter(Rocket.dex_number == dex_number, Rocket.name == name).first()
+            rocket_pokemon = Rocket.query.filter(Rocket.dex_number == dex_number, Rocket.name == name, Rocket.user_id == user_id).first()
 
             if rocket_pokemon:
                 if rocket_pokemon.method != method:
@@ -54,7 +57,7 @@ def fetch_rocket_pokemon_data(app_context):
                     count_skipped += 1
             else:
                 # Insert new Rocket Pokémon
-                new_rocket = Rocket(dex_number=dex_number, name=name, method=method)
+                new_rocket = Rocket(dex_number=dex_number, name=name, method=method, user_id=user_id)
                 db.session.add(new_rocket)
                 db.session.commit()
                 count_inserted += 1

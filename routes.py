@@ -1,11 +1,12 @@
 from flask import (
-    render_template, redirect, url_for, jsonify, request, session
+    render_template, redirect, url_for, jsonify, request, session, flash
 )
 from functools import wraps
 from models import (
     db, Pokemon, Note, SpecialsPokemon, PokeGenieEntry,
     ShinyPokemon, Rocket, Costume, Form
 )
+from sqlalchemy.exc import IntegrityError
 
 # Authentication decorator
 def requires_auth(f):
@@ -68,7 +69,11 @@ def init_routes(app, google):
 
     # Pokémon page route
     @app.route('/pogo/pokemon')
+    @requires_auth
     def pokemon():
+        user_id = session.get('user_id')
+        
+        # Fetch user's Pokémon entries
         pokemon_list = Pokemon.query.all()
         extended_pokemon_list = []
 
@@ -83,9 +88,9 @@ def init_routes(app, google):
             mythical = 'No'
             ultra_beast = 'No'
 
-            # Poke Genie entries for this Pokémon
+            # Poke Genie entries for this Pokémon for the specific user
             poke_genie_entries = PokeGenieEntry.query.filter_by(
-                pokemon_number=pokemon.id
+                pokemon_number=pokemon.id, user_id=user_id  # Filter by user_id
             ).all()
 
             # Have Living Dex Logic
@@ -133,16 +138,14 @@ def init_routes(app, google):
 
             # Shiny Available and Shiny Note Logic
             shiny_entry = ShinyPokemon.query.filter_by(
-                dex_number=str(pokemon.id)
+                dex_number=str(pokemon.id), user_id=user_id  # Filter by user_id
             ).first()
             if shiny_entry:
                 shiny_available = 'Yes'
                 shiny_note = shiny_entry.method
 
-            # Specials Logic
-            specials_entry = SpecialsPokemon.query.filter_by(
-                dex_number=str(pokemon.id)
-            ).first()
+            # Specials Logic (Legendary, Mythical, Ultra Beast)
+            specials_entry = SpecialsPokemon.query.filter_by(dex_number=str(pokemon.id), user_id=user_id).first()
             if specials_entry:
                 if specials_entry.type == 'Legendary':
                     legendary = 'Yes'
@@ -152,7 +155,7 @@ def init_routes(app, google):
                     ultra_beast = 'Yes'
 
             # Note Text
-            note_entry = Note.query.filter_by(pokemon_id=pokemon.id).first()
+            note_entry = Note.query.filter_by(pokemon_id=pokemon.id, user_id=user_id).first()  # Filter by user_id
             note_text = note_entry.note_text if note_entry else ''
 
             # Append extended data
@@ -176,8 +179,12 @@ def init_routes(app, google):
 
     # Poke Genie page route
     @app.route('/pogo/poke-genie')
+    @requires_auth
     def poke_genie():
-        poke_genie_data = PokeGenieEntry.query.all()
+        user_id = session.get('user_id')
+
+        # Fetch data for the logged-in user
+        poke_genie_data = PokeGenieEntry.query.filter_by(user_id=user_id).all()  # Filter by user_id
         return render_template('poke_genie.html', poke_genie_data=poke_genie_data)
 
     # Shinies page route
@@ -251,11 +258,17 @@ def init_routes(app, google):
 
     # Notes page route
     @app.route('/pogo/notes')
+    @requires_auth
     def notes():
+        user_id = session.get('user_id')
+
+        # Fetch notes for the logged-in user
         notes_data = db.session.query(Note, Pokemon.name).join(
             Pokemon, Note.pokemon_id == Pokemon.id
-        ).all()
+        ).filter(Note.user_id == user_id).all()  # Filter by user_id
+
         return render_template('notes.html', notes_data=notes_data)
+
 
     # API route for Pokemon
     @app.route('/pogo/api/pokemon')
@@ -267,7 +280,7 @@ def init_routes(app, google):
             "image_url": p.image_url
         } for p in pokemon_list])
 
-    # Authentication Routes ###
+    ### Authentication Routes ###
 
     # Check if the user is authenticated
     @app.route('/pogo/is_authenticated')
@@ -286,7 +299,6 @@ def init_routes(app, google):
         edit_mode = 'edit=true' in request.args
         session['edit_mode'] = edit_mode
         session['next_url'] = next_url
-        # Remove redirect_uri parameter
         return google.authorize_redirect()
 
     # OAuth2 callback route after user authenticates
@@ -311,6 +323,7 @@ def init_routes(app, google):
     @app.route('/pogo/logout')
     def logout():
         session.pop('user', None)
+        flash("You have been logged out.", 'info')
         return redirect(url_for('login'))
 
     ### Protected Routes ###
@@ -366,6 +379,7 @@ def init_routes(app, google):
     def update_notes():
         try:
             data = request.get_json()
+            user_id = session.get('user_id')
             notes = data.get('notes', [])
             if not notes:
                 return jsonify({'error': 'No notes received'}), 400
@@ -375,11 +389,12 @@ def init_routes(app, google):
                 note_text = note.get('note')
                 if not pokemon_id:
                     continue
-                existing_note = Note.query.filter_by(pokemon_id=pokemon_id).first()
+
+                existing_note = Note.query.filter_by(pokemon_id=pokemon_id, user_id=user_id).first()  # Filter by user_id
                 if existing_note:
                     existing_note.note_text = note_text
                 else:
-                    new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
+                    new_note = Note(pokemon_id=pokemon_id, note_text=note_text, user_id=user_id)
                     db.session.add(new_note)
 
             db.session.commit()
@@ -387,3 +402,4 @@ def init_routes(app, google):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
+        
