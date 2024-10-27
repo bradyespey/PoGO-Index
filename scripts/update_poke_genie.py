@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Now, you can import app and models after sys.path is correctly set
 from app import app, db
-from models import PokeGenieEntry
+from models import PokeGenieEntry, User
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 FOLDER_ID = '1--T8Abai5H-b8vY_OVAVHKdA4NXC50rS'
@@ -72,7 +72,6 @@ def download_latest_csv_from_drive():
 def sanitize_numeric(value):
     """Convert strings like '2.29kg' to floats by removing non-numeric characters."""
     try:
-        # Remove any non-numeric characters except for '.' and '-'
         clean_value = ''.join(c for c in value if c.isdigit() or c == '.' or c == '-')
         return float(clean_value) if clean_value else None
     except ValueError:
@@ -85,8 +84,24 @@ def sanitize_percentage(value):
     except ValueError:
         return None
 
-def import_poke_genie_data(app_context, user_id):
-    with app_context:
+def get_or_create_user():
+    """Get or create a test user in the database."""
+    user = User.query.filter_by(email='testuser@example.com').first()
+    if not user:
+        print("No user found, creating a new test user.")
+        user = User(google_id='test_google_id', name='Test User', email='testuser@example.com')
+        db.session.add(user)
+        db.session.commit()
+        print(f"Created new user with user_id: {user.id}")
+    else:
+        print(f"Found existing user with user_id: {user.id}")
+    return user.id  # Return the ID of the user
+
+def import_poke_genie_data():
+    with app.app_context():
+        user_id = get_or_create_user()  # Ensure we have a valid user_id
+        print(f"Using user_id: {user_id}")
+
         csv_file_path = download_latest_csv_from_drive()
         if not csv_file_path:
             print("No CSV file found. Exiting.")
@@ -96,7 +111,9 @@ def import_poke_genie_data(app_context, user_id):
             reader = csv.reader(csvfile)
             headers = next(reader)  # Skip header
 
-            total_entries = sum(1 for row in reader)
+            # Reset the file pointer and count total entries
+            csvfile.seek(0)
+            total_entries = sum(1 for row in reader) - 1  # Subtract 1 for the header
             print(f"Found {total_entries} Poke Genie entries in the CSV.")
 
             csvfile.seek(0)
@@ -105,7 +122,6 @@ def import_poke_genie_data(app_context, user_id):
             count_inserted, count_skipped = 0, 0
 
             for idx, row in enumerate(reader):
-                # Parsing fields as before
                 index = int(row[0])
                 name = row[1]
                 form = row[2]
@@ -157,13 +173,13 @@ def import_poke_genie_data(app_context, user_id):
                 sha_pur_l = int(row[48]) if row[48] else None
                 marked_for_pvp = int(row[49]) if row[49] else None
 
-                # Check if the entry already exists
-                existing_entry = PokeGenieEntry.query.filter_by(index=index).first()
+                # Check if the entry already exists for this user
+                existing_entry = PokeGenieEntry.query.filter_by(index=index, user_id=user_id).first()
 
                 if existing_entry:
                     count_skipped += 1
                 else:
-                    # Insert new entry, adding the user_id value
+                    # Insert new entry, using the correct user_id
                     new_entry = PokeGenieEntry(
                         index=index,
                         name=name,
@@ -215,22 +231,19 @@ def import_poke_genie_data(app_context, user_id):
                         form_l=form_l,
                         sha_pur_l=sha_pur_l,
                         marked_for_pvp=marked_for_pvp,
-                        user_id=user_id  # Add the user_id field here
+                        user_id=user_id  # Ensure user_id is set correctly
                     )
                     db.session.add(new_entry)
-                    db.session.commit()
                     count_inserted += 1
 
-                # Log progress every 10 entries
-                if idx % 10 == 0:
-                    print(f"Processing entry {idx + 1}/{total_entries}...")
+                # Log progress every 100 entries
+                if (idx + 1) % 100 == 0 or (idx + 1) == total_entries:
+                    print(f"Processed {idx + 1}/{total_entries} entries...")
 
+            db.session.commit()
             print(f"Total Poke Genie entries processed: {total_entries}")
             print(f"Entries added: {count_inserted}")
             print(f"Entries skipped: {count_skipped}")
 
 if __name__ == "__main__":
-    from app import app
-    with app.app_context():
-        user_id = 1  # You may need to determine how you want to get the user_id
-        import_poke_genie_data(app.app_context(), user_id)
+    import_poke_genie_data()
