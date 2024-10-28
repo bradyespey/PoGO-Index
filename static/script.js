@@ -146,7 +146,7 @@ $(document).ready(function () {
                         'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'
                     ]
                 }, // Index 3
-                { title: 'Have Living Dex', filterType: 'select', options: ['Yes', 'No'] }, // Index 4
+                { title: 'Brady', filterType: 'select', options: ['Yes', 'No'] }, // Index 4
                 { title: 'Have Shiny', filterType: 'select', options: ['Yes', 'No'] }, // Index 5
                 { title: 'Shiny Available', filterType: 'select', options: ['Yes', 'No'] }, // Index 6
                 { title: 'Shiny Note', filterType: 'text' }, // Index 7
@@ -173,7 +173,7 @@ $(document).ready(function () {
                 {
                     targets: [10, 11, 12], // Hide the Legendary, Mythical, and Ultra Beast columns
                     visible: false,
-                    searchable: true  // Ensure these hidden columns are searchable
+                    searchable: true
                 }
             ],
             extraFilters: [

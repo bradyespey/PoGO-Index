@@ -6,19 +6,12 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    google_id = db.Column(db.String(255), unique=True, nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    google_id = db.Column(db.String(255), unique=True)
+    name = db.Column(db.String(255))
+    email = db.Column(db.String(255), unique=True)
 
-    # Relationships
+    # Relationship to OwnedPokemon
     owned_pokemon = db.relationship('OwnedPokemon', backref='user', lazy=True)
-    poke_genie_entries = db.relationship('PokeGenieEntry', backref='user', lazy=True)
-    shinies = db.relationship('ShinyPokemon', backref='user', lazy=True)
-    costumes = db.relationship('Costume', backref='user', lazy=True)
-    forms = db.relationship('Form', backref='user', lazy=True)
-    rockets = db.relationship('Rocket', backref='user', lazy=True)
-    specials = db.relationship('SpecialsPokemon', backref='user', lazy=True)
-    notes = db.relationship('Note', backref='user', lazy=True)
 
     def __repr__(self):
         return f"<User {self.name}>"
@@ -102,7 +95,6 @@ class PokeGenieEntry(db.Model):
     form_l = db.Column(db.String(50))
     sha_pur_l = db.Column(db.Integer)
     marked_for_pvp = db.Column(db.Integer)  # 0 or 1
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<PokeGenieEntry {self.index} - {self.name}>"
@@ -114,7 +106,6 @@ class ShinyPokemon(db.Model):
     dex_number = db.Column(db.Integer)
     name = db.Column(db.String(100))
     method = db.Column(db.String(255))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<ShinyPokemon {self.dex_number} - {self.name}>"
@@ -126,7 +117,6 @@ class SpecialsPokemon(db.Model):
     dex_number = db.Column(db.Integer)
     name = db.Column(db.String(100))
     type = db.Column(db.String(50))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<SpecialsPokemon {self.dex_number} - {self.name} ({self.type})>"
@@ -139,7 +129,6 @@ class Costume(db.Model):
     name = db.Column(db.String(100))
     costume = db.Column(db.String(100))
     first_appearance = db.Column(db.String(255))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<Costume {self.dex_number} - {self.name} ({self.costume})>"
@@ -151,7 +140,6 @@ class Form(db.Model):
     dex_number = db.Column(db.String(10))
     name = db.Column(db.String(100))
     form = db.Column(db.String(100))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<Form {self.dex_number} - {self.name} ({self.form})>"
@@ -163,7 +151,6 @@ class Rocket(db.Model):
     dex_number = db.Column(db.Integer)
     name = db.Column(db.String(100))
     method = db.Column(db.String(255))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<Rocket {self.dex_number} - {self.name}>"
@@ -174,7 +161,6 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pokemon_id = db.Column(db.Integer)
     note_text = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<Note for Pokémon ID {self.pokemon_id}>"
