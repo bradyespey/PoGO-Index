@@ -12,12 +12,12 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import the app and database models
 from app import app, db
-from models import PokeGenieEntry
+from models import PokeGenieEntry, User
 
+# Google API and folder ID configurations
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 FOLDER_ID = '1--T8Abai5H-b8vY_OVAVHKdA4NXC50rS'
 
-# Get Google API credentials from environment variables
 SERVICE_ACCOUNT_INFO = {
     "type": os.getenv('SERVICE_ACCOUNT_TYPE'),
     "project_id": os.getenv('SERVICE_ACCOUNT_PROJECT_ID'),
@@ -35,10 +35,25 @@ SERVICE_ACCOUNT_INFO = {
 creds = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=SCOPES)
 drive_service = build('drive', 'v3', credentials=creds)
 
-def download_latest_csv_from_drive():
-    """Download the latest CSV file from Google Drive"""
-    print(f"Using folder ID: {FOLDER_ID}")
+def get_or_create_default_user():
+    """Get or create a default user for associating Poke Genie entries."""
+    user = User.query.filter_by(email='default@example.com').first()
+    if not user:
+        user = User(
+            google_id='default_google_id',
+            name='Default User',
+            email='default@example.com'
+        )
+        db.session.add(user)
+        db.session.commit()
+        print(f"Created default user with user_id: {user.id}")
+    else:
+        print(f"Using existing default user with user_id: {user.id}")
+    return user.id
 
+def download_latest_csv_from_drive():
+    """Download the latest CSV file from Google Drive."""
+    print(f"Using folder ID: {FOLDER_ID}")
     results = drive_service.files().list(
         q=f"'{FOLDER_ID}' in parents and mimeType='text/csv'",
         orderBy="createdTime desc",
@@ -84,6 +99,7 @@ def sanitize_percentage(value):
         return None
 
 def import_poke_genie_data(app_context):
+    """Process and insert the CSV data into the Poke Genie table."""
     with app_context:
         csv_file_path = download_latest_csv_from_drive()
         if not csv_file_path:
@@ -100,10 +116,11 @@ def import_poke_genie_data(app_context):
             csvfile.seek(0)
             next(reader)  # Skip header again after reset
 
+            user_id = get_or_create_default_user()
+
             count_inserted, count_skipped = 0, 0
 
             for idx, row in enumerate(reader):
-                # Parsing fields
                 index = int(row[0])
                 name = row[1]
                 form = row[2]
@@ -155,13 +172,11 @@ def import_poke_genie_data(app_context):
                 sha_pur_l = int(row[48]) if row[48] else None
                 marked_for_pvp = int(row[49]) if row[49] else None
 
-                # Check if the entry already exists
                 existing_entry = PokeGenieEntry.query.filter_by(index=index).first()
 
                 if existing_entry:
                     count_skipped += 1
                 else:
-                    # Insert new entry
                     new_entry = PokeGenieEntry(
                         index=index,
                         name=name,
@@ -227,6 +242,5 @@ def import_poke_genie_data(app_context):
             print(f"Entries skipped: {count_skipped}")
 
 if __name__ == "__main__":
-    from app import app
     with app.app_context():
         import_poke_genie_data(app.app_context())
