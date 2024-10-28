@@ -227,7 +227,8 @@ def import_poke_genie_data(app_context):
                         name_l=name_l,
                         form_l=form_l,
                         sha_pur_l=sha_pur_l,
-                        marked_for_pvp=marked_for_pvp
+                        marked_for_pvp=marked_for_pvp,
+                        user_id=user_id
                     )
                     db.session.add(new_entry)
                     db.session.commit()
