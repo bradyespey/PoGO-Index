@@ -77,8 +77,12 @@
 
     <!-- Buttons -->
     <div class="mb-3">
-        <button id="editNotesButton" class="btn btn-warning">Edit Notes</button>
-        <button id="saveAllNotesButton" class="btn btn-success" style="display: none;">Save All Notes</button>
+        {% if 'user' in session %}
+            <button id="selectAllButton" class="btn btn-primary">Select All</button>
+            <button id="deselectAllButton" class="btn btn-secondary">Deselect All</button>
+            <button id="editNotesButton" class="btn btn-warning">Edit Notes</button>
+            <button id="saveAllNotesButton" class="btn btn-success" style="display: none;">Save All Notes</button>
+        {% endif %}
         <button id="resetFiltersButton" class="btn btn-secondary">Reset All</button>
     </div>
 
@@ -92,9 +96,7 @@
                     <th>Name</th>
                     <th>Type</th>
                     <th>Brady</th>
-                    <th>Have Shiny</th>
-                    <th>Shiny Available</th>
-                    <th>Shiny Note</th>
+                    <th>Matt</th>
                     <th>Need on iPad</th>
                     <th>Note</th>
                     <!-- Hidden columns for filters -->
@@ -117,9 +119,13 @@
                     <td>{{ pokemon.name }}</td>
                     <td>{{ pokemon.type }}</td>
                     <td>{{ pokemon.brady_living_dex }}</td>
-                    <td>{{ pokemon.have_shiny }}</td>
-                    <td>{{ pokemon.shiny_available }}</td>
-                    <td>{{ pokemon.shiny_note }}</td>
+                    <td>
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-have-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.matt_have == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ pokemon.matt_have }}
+                        {% endif %}
+                    </td>
                     <td>{{ pokemon.need_on_ipad }}</td>
                     <td>
                         <div class="note-display">{{ pokemon.note_text or '' }}</div>

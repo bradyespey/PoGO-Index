@@ -130,27 +130,22 @@ $(document).ready(function () {
             paging: true,
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
-            stateSave: true, // Keep stateSave enabled
+            stateSave: true,
             searching: true,
             lengthChange: false,
             showEntriesSelector: '#showEntries',
             columns: [
-                { title: '#', filterType: 'numberExact' }, // Index 0
-                { title: 'Image', filterType: null }, // Index 1
-                { title: 'Name', filterType: 'text' }, // Index 2
+                { title: '#', filterType: 'numberExact' },
+                { title: 'Image', filterType: null },
+                { title: 'Name', filterType: 'text' },
                 {
                     title: 'Type',
                     filterType: 'select',
-                    options: [
-                        'Grass', 'Poison', 'Fire', 'Water', 'Electric', 'Ice', 'Fighting', 'Ground', 'Flying',
-                        'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'
-                    ]
-                }, // Index 3
-                { title: 'Brady', filterType: 'select', options: ['Yes', 'No'] }, // Index 4
-                { title: 'Have Shiny', filterType: 'select', options: ['Yes', 'No'] }, // Index 5
-                { title: 'Shiny Available', filterType: 'select', options: ['Yes', 'No'] }, // Index 6
-                { title: 'Shiny Note', filterType: 'text' }, // Index 7
-                { title: 'Need on iPad', filterType: 'select', options: ['Yes', 'No'] }, // Index 8
+                    options: ['Grass', 'Poison', 'Fire', 'Water', 'Electric', 'Ice', 'Fighting', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy']
+                },
+                { title: 'Brady', filterType: 'select', options: ['Yes', 'No'] },
+                { title: 'Matt', filterType: 'select', options: ['Yes', 'No'] }, // Matt column
+                { title: 'Need on iPad', filterType: 'select', options: ['Yes', 'No'] },
                 {
                     title: 'Note',
                     filterType: 'select',
@@ -164,30 +159,25 @@ $(document).ready(function () {
                             column.search('').draw();
                         }
                     }
-                }, // Index 9
-                { title: 'Legendary', filterType: null }, // Index 10 (Hidden)
-                { title: 'Mythical', filterType: null }, // Index 11 (Hidden)
-                { title: 'Ultra Beast', filterType: null }, // Index 12 (Hidden)
+                },
+                { title: 'Legendary', filterType: null }, // Hidden
+                { title: 'Mythical', filterType: null }, // Hidden
+                { title: 'Ultra Beast', filterType: null }, // Hidden
             ],
             columnDefs: [
                 {
-                    targets: [10, 11, 12], // Hide the Legendary, Mythical, and Ultra Beast columns
+                    targets: [8, 9, 10], // Hide the Legendary, Mythical, and Ultra Beast columns
                     visible: false,
                     searchable: true
                 }
             ],
             extraFilters: [
-                // Name Search
                 { selector: '#searchName', columnIndex: 2, type: 'text' },
-                // Type Filter
                 { selector: '#filterType', columnIndex: 3, type: 'select' },
-                // Legendary Filter
-                { selector: '#filterLegendary', columnIndex: 10, type: 'select' },
-                // Mythical Filter
-                { selector: '#filterMythical', columnIndex: 11, type: 'select' },
-                // Ultra Beast Filter
-                { selector: '#filterUltraBeast', columnIndex: 12, type: 'select' },
-            ],
+                { selector: '#filterLegendary', columnIndex: 8, type: 'select' },
+                { selector: '#filterMythical', columnIndex: 9, type: 'select' },
+                { selector: '#filterUltraBeast', columnIndex: 10, type: 'select' },
+            ]
         });
 
         // Initialize Poke Genie Table

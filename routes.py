@@ -4,7 +4,7 @@ from flask import (
 from functools import wraps
 from models import (
     db, Pokemon, Note, SpecialsPokemon, PokeGenieEntry,
-    ShinyPokemon, Rocket, Costume, Form
+    ShinyPokemon, Rocket, Costume, Form, User
 )
 
 # Authentication decorator
@@ -72,13 +72,18 @@ def init_routes(app, google):
         pokemon_list = Pokemon.query.all()
         extended_pokemon_list = []
 
+        # Fetch Matt's user
+        matt = User.query.filter_by(email='matt@example.com').first()  # Replace with Matt's actual email
+
+        # Get the set of Pokémon IDs that Matt owns
+        matt_owned_ids = set()
+        if matt:
+            matt_owned_ids = {op.pokemon_id for op in matt.owned_pokemon}
+
         for pokemon in pokemon_list:
             # Default values
             brady_living_dex = 'No'
-            have_shiny = 'No'
             need_on_ipad = 'No'
-            shiny_available = 'No'
-            shiny_note = 'No shiny available yet'
             legendary = 'No'
             mythical = 'No'
             ultra_beast = 'No'
@@ -104,18 +109,18 @@ def init_routes(app, google):
                     break
 
             # Have Shiny Logic
-            for entry in poke_genie_entries:
-                lucky = int(entry.lucky)
-                shadow_purified = int(entry.shadow_purified)
-                favorite = int(entry.favorite)
-
-                if (
-                    lucky == 0 and
-                    shadow_purified in [0, 2] and
-                    favorite == 1
-                ):
-                    have_shiny = 'Yes'
-                    break
+            #for entry in poke_genie_entries:
+            #    lucky = int(entry.lucky)
+            #    shadow_purified = int(entry.shadow_purified)
+            #    favorite = int(entry.favorite)
+            #
+            #    if (
+            #        lucky == 0 and
+            #        shadow_purified in [0, 2] and
+            #        favorite == 1
+            #    ):
+            #        have_shiny = 'Yes'
+            #        break
 
             # Need on iPad Logic
             for entry in poke_genie_entries:
@@ -132,12 +137,12 @@ def init_routes(app, google):
                     break
 
             # Shiny Available and Shiny Note Logic
-            shiny_entry = ShinyPokemon.query.filter_by(
-                dex_number=str(pokemon.id)
-            ).first()
-            if shiny_entry:
-                shiny_available = 'Yes'
-                shiny_note = shiny_entry.method
+            #shiny_entry = ShinyPokemon.query.filter_by(
+            #    dex_number=str(pokemon.id)
+            #).first()
+            #if shiny_entry:
+            #    shiny_available = 'Yes'
+            #    shiny_note = shiny_entry.method
 
             # Specials Logic
             specials_entry = SpecialsPokemon.query.filter_by(
@@ -155,6 +160,9 @@ def init_routes(app, google):
             note_entry = Note.query.filter_by(pokemon_id=pokemon.id).first()
             note_text = note_entry.note_text if note_entry else ''
 
+            # Matt's Have Living Dex Logic
+            matt_have = 'Yes' if pokemon.id in matt_owned_ids else 'No'
+
             # Append extended data
             extended_pokemon_list.append({
                 'id': pokemon.id,
@@ -162,9 +170,7 @@ def init_routes(app, google):
                 'type': pokemon.type,
                 'image_url': pokemon.image_url,
                 'brady_living_dex': brady_living_dex,
-                'have_shiny': have_shiny,
-                'shiny_available': shiny_available,
-                'shiny_note': shiny_note,
+                'matt_have': matt_have,  # Include Matt's data
                 'need_on_ipad': need_on_ipad,
                 'note_text': note_text,
                 'legendary': legendary,
