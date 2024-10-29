@@ -10,11 +10,11 @@ from models import (
 # Authentication decorator
 def requires_auth(f):
     @wraps(f)
-    def decorated(*args, **kwargs):
+    def decorated_function(*args, **kwargs):
         if 'user' not in session:
-            return redirect(url_for('login'))
+            return redirect(url_for('login', next=request.url))  # Redirect to login with 'next' URL
         return f(*args, **kwargs)
-    return decorated
+    return decorated_function
 
 def init_routes(app, google):
 
@@ -279,15 +279,11 @@ def init_routes(app, google):
     def login():
         if is_user_authenticated():
             next_url = session.get('next_url', url_for('info_page'))
-            edit_mode = session.get('edit_mode', False)
             return redirect(next_url)
 
         next_url = request.args.get('next', url_for('info_page'))
-        edit_mode = 'edit=true' in request.args
-        session['edit_mode'] = edit_mode
         session['next_url'] = next_url
-        # Remove redirect_uri parameter
-        return google.authorize_redirect()
+        return google.authorize_redirect(redirect_uri=url_for('authorize', _external=True))
 
     # OAuth2 callback route after user authenticates
     @app.route('/pogo/oauth2callback')

@@ -409,63 +409,107 @@ $(document).ready(function () {
         $('#saveAllNotesButton').hide(); // Hide global Save button
     }
 
-    // Edit Notes button functionality
-    $('#editNotesButton').on('click', function () {
-        if (!editMode) {
-            $.get('/pogo/is_authenticated', function (response) {
-                if (response.authenticated) {
-                    enableEditMode();
-                } else {
-                    var currentUrl = window.location.pathname + window.location.search;
-                    window.location.href = '/pogo/login?next=' + encodeURIComponent(currentUrl) + '&edit=true';
-                }
-            }).fail(function () {
-                alert('Failed to check authentication status.');
-            });
-        } else {
-            disableEditMode();
-        }
-    });
-
-    // Auto-enable edit mode if redirected with ?edit=true
-    if (window.location.search.includes('edit=true')) {
-        enableEditMode(); // Automatically enable edit mode on page load
-    }
-
-    // Global Save All Notes button functionality
-    $('#saveAllNotesButton').on('click', function () {
-        var notesData = [];
-
-        // Collect all notes that have been edited
-        $('.note-edit').each(function () {
-            var pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
-            var noteText = $(this).val();
-
-            if (pokemonId !== undefined && noteText !== undefined) {
-                notesData.push({ pokemon_id: pokemonId, note: noteText });
-            }
-        });
-
-        // Send the notes to the server
-        $.ajax({
-            url: '/pogo/update-notes',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ notes: notesData }),
-            success: function () {
-                alert('All notes saved successfully!');
-                // Update the note displays and disable edit mode without reloading
-                $('.note-edit').each(function () {
-                    var noteText = $(this).val();
-                    $(this).hide();
-                    $(this).siblings('.note-display').text(noteText).show();
+    $(document).ready(function () {
+        // Edit Notes button functionality
+        $('#editNotesButton').on('click', function () {
+            if (!editMode) {
+                $.get('/pogo/is_authenticated', function (response) {
+                    if (response.authenticated) {
+                        enableEditMode();
+                    } else {
+                        var currentUrl = window.location.pathname + window.location.search;
+                        window.location.href = '/pogo/login?next=' + encodeURIComponent(currentUrl) + '&edit=true';
+                    }
+                }).fail(function () {
+                    alert('Failed to check authentication status.');
                 });
+            } else {
                 disableEditMode();
-            },
-            error: function () {
-                alert('Failed to save notes. Please try again.');
             }
         });
+
+        // Auto-enable edit mode if redirected with ?edit=true
+        if (window.location.search.includes('edit=true')) {
+            enableEditMode(); // Automatically enable edit mode on page load
+        }
+
+        // Global Save All Notes button functionality
+        $('#saveAllNotesButton').on('click', function () {
+            var notesData = [];
+
+            // Collect all notes that have been edited
+            $('.note-edit').each(function () {
+                var pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
+                var noteText = $(this).val();
+
+                if (pokemonId !== undefined && noteText !== undefined) {
+                    notesData.push({ pokemon_id: pokemonId, note: noteText });
+                }
+            });
+
+            // Send the notes to the server
+            $.ajax({
+                url: '/pogo/update-notes',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ notes: notesData }),
+                success: function () {
+                    alert('All notes saved successfully!');
+                    // Update the note displays and disable edit mode without reloading
+                    $('.note-edit').each(function () {
+                        var noteText = $(this).val();
+                        $(this).hide();
+                        $(this).siblings('.note-display').text(noteText).show();
+                    });
+                    disableEditMode();
+                },
+                error: function () {
+                    alert('Failed to save notes. Please try again.');
+                }
+            });
+        });
+    
+        // Enable the Save Changes button when in edit mode
+        function enableEditMode() {
+            editMode = true;
+            $('.note-display').hide();
+            $('.note-edit').show();
+            $('#editNotesButton').text('Cancel Editing');
+            $('#saveAllNotesButton').show(); // Show Save button
+        }
+    
+        // Disable the Save Changes button when not in edit mode
+        function disableEditMode() {
+            editMode = false;
+            $('.note-display').show();
+            $('.note-edit').hide();
+            $('#editNotesButton').text('Edit Notes');
+            $('#saveAllNotesButton').hide(); // Hide Save button
+        }
+    
+        // Collect Matt's owned Pokémon data
+        function getMattOwnedPokemon() {
+            var ownedPokemon = [];
+            $('.matt-have-checkbox').each(function () {
+                var pokemonId = $(this).data('pokemon-id');
+                var mattHave = $(this).is(':checked') ? 'Yes' : 'No';
+                ownedPokemon.push({
+                    pokemon_id: pokemonId,
+                    matt_have: mattHave
+                });
+            });
+            return ownedPokemon;
+        }
+    
+        // Select All and Deselect All button functionality
+        $('#selectAllButton').on('click', function () {
+            $('.matt-have-checkbox:visible').prop('checked', true);
+        });
+    
+        $('#deselectAllButton').on('click', function () {
+            $('.matt-have-checkbox:visible').prop('checked', false);
+        });
+    
     });
 
     // Event listener for Reset All button
