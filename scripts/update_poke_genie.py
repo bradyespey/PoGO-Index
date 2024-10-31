@@ -172,11 +172,13 @@ def import_poke_genie_data(app_context):
                 sha_pur_l = int(row[48]) if row[48] else None
                 marked_for_pvp = int(row[49]) if row[49] else None
 
+                # Check for existing entry to avoid duplicates
                 existing_entry = PokeGenieEntry.query.filter_by(index=index).first()
 
                 if existing_entry:
                     count_skipped += 1
                 else:
+                    # Add a new entry with all fields populated
                     new_entry = PokeGenieEntry(
                         index=index,
                         name=name,
@@ -227,8 +229,7 @@ def import_poke_genie_data(app_context):
                         name_l=name_l,
                         form_l=form_l,
                         sha_pur_l=sha_pur_l,
-                        marked_for_pvp=marked_for_pvp,
-                        user_id=user_id
+                        marked_for_pvp=marked_for_pvp
                     )
                     db.session.add(new_entry)
                     db.session.commit()

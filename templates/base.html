@@ -118,16 +118,21 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
     <!-- jQuery and Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables core JS -->
+    <!-- DataTables core and responsive JS -->
     <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-    <!-- DataTables Responsive JS -->
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <!-- Include the custom script -->
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <!-- Custom Modular JavaScript Files -->
+    <script src="{{ url_for('static', filename='js/initializeDataTable.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/initializeFilters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/editMode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/resetFilters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/selectAll.js') }}"></script>
+
+    <!-- Additional Script for Initializing All Tables -->
+    <script src="{{ url_for('static', filename='js/initAllTables.js') }}"></script>
 </body>
 </html>

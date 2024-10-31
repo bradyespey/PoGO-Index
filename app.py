@@ -60,10 +60,10 @@ google = oauth.register(
 )
 
 # Debug the redirect_uri being used
-print(f"Redirect URI being used: {redirect_uri}")
+#print(f"Redirect URI being used: {redirect_uri}")
 
 # Debug the redirect_uri being used
-print(f"Redirect URI being used: {os.getenv('REDIRECT_URIS')}")
+#print(f"Redirect URI being used: {os.getenv('REDIRECT_URIS')}")
 
 # Ensure that OAuth environment variables are set
 if not os.getenv('OAUTH_CLIENT_ID') or not os.getenv('OAUTH_CLIENT_SECRET'):
