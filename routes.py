@@ -72,7 +72,7 @@ def init_routes(app, google):
         pokemon_list = Pokemon.query.all()
         extended_pokemon_list = []
 
-        # Fetch Matt's user
+        # Fetch Matt's user (based on user_2_living_dex now)
         matt = User.query.filter_by(email='matt@example.com').first()  # Replace with Matt's actual email
 
         # Get the set of Pokémon IDs that Matt owns
@@ -81,73 +81,19 @@ def init_routes(app, google):
             matt_owned_ids = {op.pokemon_id for op in matt.owned_pokemon}
 
         for pokemon in pokemon_list:
-            # Default values
-            brady_living_dex = 'No'
-            need_on_ipad = 'No'
-            legendary = 'No'
-            mythical = 'No'
-            ultra_beast = 'No'
+            # Use the existing user-specific dex fields from the updated model
+            brady_living_dex = 'Yes' if pokemon.user_1_living_dex else 'No'
+            brady_lucky_dex = 'Yes' if pokemon.user_1_lucky else 'No'
+            need_on_ipad = 'Yes' if pokemon.user_0_living_dex else 'No'
+            ipad_lucky_dex = 'Yes' if pokemon.user_0_lucky else 'No'
 
-            # Poke Genie entries for this Pokémon
-            poke_genie_entries = PokeGenieEntry.query.filter_by(
-                pokemon_number=pokemon.id
-            ).all()
+            # Matt's Have Living Dex Logic (user_2_living_dex is used now)
+            matt_have = 'Yes' if pokemon.user_2_living_dex else 'No'
+            matt_lucky = 'Yes' if pokemon.user_2_lucky else 'No'
 
-            # Brady Living Dex Logic
-            for entry in poke_genie_entries:
-                # Convert fields to integers
-                lucky = int(entry.lucky)
-                shadow_purified = int(entry.shadow_purified)
-                favorite = int(entry.favorite)
-
-                if (
-                    lucky == 0 and
-                    shadow_purified in [0, 2] and
-                    favorite in [0, 4]
-                ):
-                    brady_living_dex = 'Yes'
-                    break
-
-            # Have Shiny Logic
-            #for entry in poke_genie_entries:
-            #    lucky = int(entry.lucky)
-            #    shadow_purified = int(entry.shadow_purified)
-            #    favorite = int(entry.favorite)
-            #
-            #    if (
-            #        lucky == 0 and
-            #        shadow_purified in [0, 2] and
-            #        favorite == 1
-            #    ):
-            #        have_shiny = 'Yes'
-            #        break
-
-            # Need on iPad Logic
-            for entry in poke_genie_entries:
-                lucky = int(entry.lucky)
-                shadow_purified = int(entry.shadow_purified)
-                favorite = int(entry.favorite)
-
-                if (
-                    lucky == 0 and
-                    shadow_purified == 0 and
-                    favorite == 4
-                ):
-                    need_on_ipad = 'Yes'
-                    break
-
-            # Shiny Available and Shiny Note Logic
-            #shiny_entry = ShinyPokemon.query.filter_by(
-            #    dex_number=str(pokemon.id)
-            #).first()
-            #if shiny_entry:
-            #    shiny_available = 'Yes'
-            #    shiny_note = shiny_entry.method
-
-            # Specials Logic
-            specials_entry = SpecialsPokemon.query.filter_by(
-                dex_number=str(pokemon.id)
-            ).first()
+            # Specials Logic (Legendary, Mythical, Ultra Beast)
+            specials_entry = SpecialsPokemon.query.filter_by(dex_number=str(pokemon.id)).first()
+            legendary, mythical, ultra_beast = 'No', 'No', 'No'
             if specials_entry:
                 if specials_entry.type == 'Legendary':
                     legendary = 'Yes'
@@ -160,9 +106,6 @@ def init_routes(app, google):
             note_entry = Note.query.filter_by(pokemon_id=pokemon.id).first()
             note_text = note_entry.note_text if note_entry else ''
 
-            # Matt's Have Living Dex Logic
-            matt_have = 'Yes' if pokemon.id in matt_owned_ids else 'No'
-
             # Append extended data
             extended_pokemon_list.append({
                 'id': pokemon.id,
@@ -170,8 +113,11 @@ def init_routes(app, google):
                 'type': pokemon.type,
                 'image_url': pokemon.image_url,
                 'brady_living_dex': brady_living_dex,
-                'matt_have': matt_have,  # Include Matt's data
+                'brady_lucky_dex': brady_lucky_dex,
+                'matt_have': matt_have,
+                'matt_lucky': matt_lucky,
                 'need_on_ipad': need_on_ipad,
+                'ipad_lucky_dex': ipad_lucky_dex,
                 'note_text': note_text,
                 'legendary': legendary,
                 'mythical': mythical,
@@ -179,6 +125,45 @@ def init_routes(app, google):
             })
 
         return render_template('pokemon.html', pokemon_list=extended_pokemon_list)
+    
+    @app.route('/pogo/save-all-changes', methods=['POST'])
+    @requires_auth
+    def save_all_changes():
+        data = request.get_json()
+
+        # Process notes
+        notes = data.get('notes', [])
+        for note in notes:
+            pokemon_id = note.get('pokemon_id')
+            note_text = note.get('note')
+            if pokemon_id:
+                existing_note = Note.query.filter_by(pokemon_id=pokemon_id).first()
+                if existing_note:
+                    existing_note.note_text = note_text
+                else:
+                    new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
+                    db.session.add(new_note)
+
+        # Process checkboxes (Matt and iPad)
+        checkboxes = data.get('checkboxes', [])
+        for checkbox in checkboxes:
+            pokemon_id = checkbox.get('pokemon_id')
+            checkbox_type = checkbox.get('type')
+            value = checkbox.get('value')
+
+            if checkbox_type == 'matt_have':
+                pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
+                pokemon.user_2_living_dex = True if value == 'Yes' else False
+            elif checkbox_type == 'ipad_lucky':
+                pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
+                pokemon.user_0_lucky = True if value == 'Yes' else False
+
+        try:
+            db.session.commit()
+            return jsonify({'message': 'Changes saved successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
 
     # Poke Genie page route
     @app.route('/pogo/poke-genie')

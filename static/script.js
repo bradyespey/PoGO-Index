@@ -29,6 +29,11 @@ $(document).ready(function () {
             // Enable state saving for filters
             stateSaveParams: function (settings, data) {
                 data.search.search = '';
+            },
+            // Ensure columns are visible and adjust
+            initComplete: function () {
+                this.api().columns().visible(true); // Make sure all columns are visible at first
+                this.api().columns.adjust();        // Adjust column widths
             }
         });
 
@@ -102,6 +107,42 @@ $(document).ready(function () {
         });
     }
 
+    // Custom filtering function for checkboxes
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        var mattValue = $('#filterMatt').val();
+        var mattLuckyValue = $('#filterMattLucky').val();
+        var ipadValue = $('#filteriPad').val();
+        var ipadLuckyValue = $('#filteriPadLucky').val();
+
+        // Use the correct column indexes based on where the checkboxes are
+        var mattCheckbox = $(settings.aoData[dataIndex].anCells[6]).find('input').is(':checked') ? 'Yes' : 'No';
+        var mattLuckyCheckbox = $(settings.aoData[dataIndex].anCells[7]).find('input').is(':checked') ? 'Yes' : 'No';
+        var ipadCheckbox = $(settings.aoData[dataIndex].anCells[8]).find('input').is(':checked') ? 'Yes' : 'No';
+        var ipadLuckyCheckbox = $(settings.aoData[dataIndex].anCells[9]).find('input').is(':checked') ? 'Yes' : 'No';
+
+        // Filter for Matt checkbox
+        if (mattValue && mattValue !== 'All' && mattValue !== mattCheckbox) {
+            return false;
+        }
+
+        // Filter for Matt Lucky checkbox
+        if (mattLuckyValue && mattLuckyValue !== 'All' && mattLuckyValue !== mattLuckyCheckbox) {
+            return false;
+        }
+
+        // Filter for iPad checkbox
+        if (ipadValue && ipadValue !== 'All' && ipadValue !== ipadCheckbox) {
+            return false;
+        }
+
+        // Filter for iPad Lucky checkbox
+        if (ipadLuckyValue && ipadLuckyValue !== 'All' && ipadLuckyValue !== ipadLuckyCheckbox) {
+            return false;
+        }
+
+        return true; // If all conditions match, return true to show the row
+    });
+
     // Function to apply filters from extra filters
     function applyFilter(dataTable, filter, value) {
         if (filter.type === 'select') {
@@ -126,7 +167,9 @@ $(document).ready(function () {
         console.log("Initializing Pokémon Table");
         window.pokemonTable = initializeDataTable({
             tableSelector: '#pokemonTable',
-            responsive: true,
+            responsive: true,  // Enable responsive behavior
+            scrollX: true,     // Enable horizontal scrolling
+            autoWidth: false,  // Disable autoWidth, let it calculate widths itself
             paging: true,
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
@@ -144,8 +187,11 @@ $(document).ready(function () {
                     options: ['Grass', 'Poison', 'Fire', 'Water', 'Electric', 'Ice', 'Fighting', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy']
                 },
                 { title: 'Brady', filterType: 'select', options: ['Yes', 'No'] },
-                { title: 'Matt', filterType: 'select', options: ['Yes', 'No'] }, // Matt column
-                { title: 'Need on iPad', filterType: 'select', options: ['Yes', 'No'] },
+                { title: 'Brady Lucky', filterType: 'select', options: ['Yes', 'No'] },
+                { title: 'Matt', filterType: 'select', options: ['Yes', 'No'] },
+                { title: 'Matt Lucky', filterType: 'select', options: ['Yes', 'No'] },
+                { title: 'iPad', filterType: 'select', options: ['Yes', 'No'] },
+                { title: 'iPad Lucky', filterType: 'select', options: ['Yes', 'No'] },
                 {
                     title: 'Note',
                     filterType: 'select',
@@ -166,7 +212,7 @@ $(document).ready(function () {
             ],
             columnDefs: [
                 {
-                    targets: [8, 9, 10], // Hide the Legendary, Mythical, and Ultra Beast columns
+                    targets: [10, 11, 12], // Hide the Legendary, Mythical, and Ultra Beast columns
                     visible: false,
                     searchable: true
                 }
@@ -174,11 +220,11 @@ $(document).ready(function () {
             extraFilters: [
                 { selector: '#searchName', columnIndex: 2, type: 'text' },
                 { selector: '#filterType', columnIndex: 3, type: 'select' },
-                { selector: '#filterLegendary', columnIndex: 8, type: 'select' },
-                { selector: '#filterMythical', columnIndex: 9, type: 'select' },
-                { selector: '#filterUltraBeast', columnIndex: 10, type: 'select' },
+                { selector: '#filterLegendary', columnIndex: 11, type: 'select' },
+                { selector: '#filterMythical', columnIndex: 12, type: 'select' },
+                { selector: '#filterUltraBeast', columnIndex: 13, type: 'select' },
             ]
-        });
+        });    
 
         // Initialize Poke Genie Table
         window.pokeGenieTable = initializeDataTable({
@@ -374,160 +420,144 @@ $(document).ready(function () {
     // Call the function to initialize all tables
     initializeAllTables();
 
-    // Preloader logic (if any)
+    // Preloader logic
     window.addEventListener('load', function () {
         document.body.classList.add('loaded');
     });
 
-    var editMode = false; // Moved editMode outside to make it globally accessible
+    var editMode = false;
 
-    // Function to enable edit mode
+    // Enable edit mode
     function enableEditMode() {
         editMode = true;
         $('.note-display').hide();
         $('.note-edit').show();
         $('#editNotesButton').text('Cancel Editing');
-        $('#saveAllNotesButton').show(); // Show global Save button
+        $('#saveAllChangesButton').show();
     }
 
-    // Function to disable edit mode
+    // Disable edit mode
     function disableEditMode() {
         editMode = false;
         $('.note-display').show();
         $('.note-edit').hide();
         $('#editNotesButton').text('Edit Notes');
-        $('#saveAllNotesButton').hide(); // Hide global Save button
+        $('#saveAllChangesButton').hide();
     }
 
-    $(document).ready(function () {
-        // Edit Notes button functionality
-        $('#editNotesButton').on('click', function () {
-            if (!editMode) {
-                $.get('/pogo/is_authenticated', function (response) {
-                    if (response.authenticated) {
-                        enableEditMode();
-                    } else {
-                        var currentUrl = window.location.pathname + window.location.search;
-                        window.location.href = '/pogo/login?next=' + encodeURIComponent(currentUrl) + '&edit=true';
-                    }
-                }).fail(function () {
-                    alert('Failed to check authentication status.');
-                });
-            } else {
-                disableEditMode();
+    // Toggle edit mode
+    $('#editNotesButton').on('click', function () {
+        if (!editMode) {
+            $.get('/pogo/is_authenticated', function (response) {
+                if (response.authenticated) {
+                    enableEditMode();
+                } else {
+                    var currentUrl = window.location.pathname + window.location.search;
+                    window.location.href = '/pogo/login?next=' + encodeURIComponent(currentUrl) + '&edit=true';
+                }
+            }).fail(function () {
+                alert('Failed to check authentication status.');
+            });
+        } else {
+            disableEditMode();
+        }
+    });
+
+    // Auto-enable edit mode if redirected with ?edit=true
+    if (window.location.search.includes('edit=true')) {
+        enableEditMode();
+    }
+
+    // Collect all notes and checkboxes data for saving
+    function collectChanges() {
+        var notesData = [];
+        var checkboxesData = [];
+
+        // Collect notes
+        $('.note-edit').each(function () {
+            var pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
+            var noteText = $(this).val();
+
+            if (pokemonId !== undefined && noteText !== undefined) {
+                notesData.push({ pokemon_id: pokemonId, note: noteText });
             }
         });
 
-        // Auto-enable edit mode if redirected with ?edit=true
-        if (window.location.search.includes('edit=true')) {
-            enableEditMode(); // Automatically enable edit mode on page load
-        }
+        // Collect checkboxes (Matt and iPad)
+        $('.matt-have-checkbox, .ipad-lucky-checkbox').each(function () {
+            var pokemonId = $(this).data('pokemon-id');
+            var checkboxType = $(this).hasClass('matt-have-checkbox') ? 'matt_have' : 'ipad_lucky';
+            var checkedValue = $(this).is(':checked') ? 'Yes' : 'No';
 
-        // Global Save All Notes button functionality
-        $('#saveAllNotesButton').on('click', function () {
-            var notesData = [];
-
-            // Collect all notes that have been edited
-            $('.note-edit').each(function () {
-                var pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
-                var noteText = $(this).val();
-
-                if (pokemonId !== undefined && noteText !== undefined) {
-                    notesData.push({ pokemon_id: pokemonId, note: noteText });
-                }
-            });
-
-            // Send the notes to the server
-            $.ajax({
-                url: '/pogo/update-notes',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ notes: notesData }),
-                success: function () {
-                    alert('All notes saved successfully!');
-                    // Update the note displays and disable edit mode without reloading
-                    $('.note-edit').each(function () {
-                        var noteText = $(this).val();
-                        $(this).hide();
-                        $(this).siblings('.note-display').text(noteText).show();
-                    });
-                    disableEditMode();
-                },
-                error: function () {
-                    alert('Failed to save notes. Please try again.');
-                }
-            });
-        });
-    
-        // Enable the Save Changes button when in edit mode
-        function enableEditMode() {
-            editMode = true;
-            $('.note-display').hide();
-            $('.note-edit').show();
-            $('#editNotesButton').text('Cancel Editing');
-            $('#saveAllNotesButton').show(); // Show Save button
-        }
-    
-        // Disable the Save Changes button when not in edit mode
-        function disableEditMode() {
-            editMode = false;
-            $('.note-display').show();
-            $('.note-edit').hide();
-            $('#editNotesButton').text('Edit Notes');
-            $('#saveAllNotesButton').hide(); // Hide Save button
-        }
-    
-        // Collect Matt's owned Pokémon data
-        function getMattOwnedPokemon() {
-            var ownedPokemon = [];
-            $('.matt-have-checkbox').each(function () {
-                var pokemonId = $(this).data('pokemon-id');
-                var mattHave = $(this).is(':checked') ? 'Yes' : 'No';
-                ownedPokemon.push({
+            if (pokemonId !== undefined) {
+                checkboxesData.push({
                     pokemon_id: pokemonId,
-                    matt_have: mattHave
+                    type: checkboxType,
+                    value: checkedValue
                 });
-            });
-            return ownedPokemon;
-        }
-    
-        // Select All and Deselect All button functionality
-        $('#selectAllButton').on('click', function () {
-            $('.matt-have-checkbox:visible').prop('checked', true);
+            }
         });
-    
-        $('#deselectAllButton').on('click', function () {
-            $('.matt-have-checkbox:visible').prop('checked', false);
+
+        return { notes: notesData, checkboxes: checkboxesData };
+    }
+
+    // Save all changes (both notes and checkboxes)
+    $('#saveAllChangesButton').on('click', function () {
+        var changes = collectChanges();
+
+        $.ajax({
+            url: '/pogo/save-all-changes',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(changes),
+            success: function () {
+                alert('Changes saved successfully!');
+
+                // Update the note displays and disable edit mode without reloading
+                $('.note-edit').each(function () {
+                    var noteText = $(this).val();
+                    $(this).hide();
+                    $(this).siblings('.note-display').text(noteText).show();
+                });
+
+                disableEditMode();
+            },
+            error: function () {
+                alert('Failed to save changes. Please try again.');
+            }
         });
-    
     });
 
-    // Event listener for Reset All button
+    // Select All and Deselect All buttons for checkboxes
+    $('#selectAllButton').on('click', function () {
+        $('.matt-have-checkbox:visible, .ipad-lucky-checkbox:visible').prop('checked', true);
+    });
+
+    $('#deselectAllButton').on('click', function () {
+        $('.matt-have-checkbox:visible, .ipad-lucky-checkbox:visible').prop('checked', false);
+    });
+
+    // Event listener for Reset All button (resets filters)
     $('#resetFiltersButton').on('click', function () {
-        // Array of table objects and their corresponding reset functions
         var tablesToReset = [
             { table: window.pokemonTable, filters: ['#searchName', '#filterType', '#filterLegendary', '#filterMythical', '#filterUltraBeast'] },
-            // Include other tables if necessary
         ];
 
         tablesToReset.forEach(function (item) {
             if (item.table) {
-                // Reset DataTables filters
                 item.table.search('').columns().search('').draw();
 
-                // Reset the input and select elements in the cloned header
                 var clonedHeader = item.table.table().header();
                 $(clonedHeader).find('input, select').val('');
 
-                // Reset the input and select elements in the extra filters
                 item.filters.forEach(function (selector) {
                     $(selector).val('');
                 });
 
-                // Reset entries per page to default
                 $('#showEntries').val('10');
                 item.table.page.len(10).draw();
             }
         });
     });
+
 });

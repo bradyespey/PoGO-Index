@@ -81,7 +81,7 @@
             <button id="selectAllButton" class="btn btn-primary">Select All</button>
             <button id="deselectAllButton" class="btn btn-secondary">Deselect All</button>
             <button id="editNotesButton" class="btn btn-warning">Edit Notes</button>
-            <button id="saveAllNotesButton" class="btn btn-success" style="display: none;">Save All Notes</button>
+            <button id="saveAllChangesButton" class="btn btn-success" style="display: none;">Save Changes</button>
         {% endif %}
         <button id="resetFiltersButton" class="btn btn-secondary">Reset All</button>
     </div>
@@ -96,8 +96,11 @@
                     <th>Name</th>
                     <th>Type</th>
                     <th>Brady</th>
+                    <th>Brady Lucky</th>
                     <th>Matt</th>
-                    <th>Need on iPad</th>
+                    <th>Matt Lucky</th>
+                    <th>iPad</th>
+                    <th>iPad Lucky</th>
                     <th>Note</th>
                     <!-- Hidden columns for filters -->
                     <th style="display: none;">Legendary</th>
@@ -118,7 +121,14 @@
                     </td>
                     <td>{{ pokemon.name }}</td>
                     <td>{{ pokemon.type }}</td>
+
+                    <!-- Brady Living Dex -->
                     <td>{{ pokemon.brady_living_dex }}</td>
+
+                    <!-- Brady Lucky Dex -->
+                    <td>{{ pokemon.brady_lucky_dex }}</td>
+
+                    <!-- Matt Living Dex (Checkbox for editable fields) -->
                     <td>
                         {% if 'user' in session %}
                             <input type="checkbox" class="matt-have-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.matt_have == 'Yes' %}checked{% endif %}>
@@ -126,12 +136,35 @@
                             {{ pokemon.matt_have }}
                         {% endif %}
                     </td>
-                    <td>{{ pokemon.need_on_ipad }}</td>
+
+                    <!-- Matt Lucky Dex -->
+                    <td>
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-lucky-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.matt_lucky == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ pokemon.matt_lucky }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Need on iPad -->
+                    <td class="ipad-column">{{ pokemon.need_on_ipad }}</td>
+
+                    <!-- iPad Lucky Dex -->
+                    <td>
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="ipad-lucky-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.ipad_lucky_dex == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ pokemon.ipad_lucky_dex }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Notes -->
                     <td>
                         <div class="note-display">{{ pokemon.note_text or '' }}</div>
                         <textarea class="note-edit form-control" style="display: none;">{{ pokemon.note_text or '' }}</textarea>
                         <div class="hidden-pokemon-id" data-pokemon-id="{{ pokemon.id }}" style="display:none;"></div>
                     </td>
+
                     <!-- Hidden columns for filters -->
                     <td style="display: none;">{{ pokemon.legendary }}</td>
                     <td style="display: none;">{{ pokemon.mythical }}</td>
