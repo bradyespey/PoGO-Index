@@ -10,13 +10,51 @@ $(document).ready(function () {
 
     initializeEditMode(); // Always in edit mode if logged in
 
-    // Track changes on checkboxes and note inputs
-    function trackChanges() {
+    // Centralized function to mark changes
+    function markChanged() {
         hasChanges = true;
+        console.log("Change detected, hasChanges set to:", hasChanges); // Debug log
     }
 
-    // Attach event listeners to track changes
-    $('.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox, .note-edit').on('change', trackChanges);
+    // Attach change event listeners to all checkboxes and note inputs
+    $(document).on('change', '.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox', function() {
+        markChanged();
+        $(this).attr('data-changed', 'true'); // Mark as changed
+        console.log(`Checkbox changed:`, this); // Debug log
+    });
+
+    $(document).on('input', '.note-edit', function() {
+        markChanged();
+        $(this).attr('data-changed', 'true'); // Mark as changed
+        console.log("Note input changed:", this); // Debug log
+    });
+
+    // Track changes on "Select All" checkboxes
+    $('#selectAllMatt, #selectAllMattLucky, #selectAlliPadLucky').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        const columnIndex = $(this).attr('id') === 'selectAllMatt' ? 6
+                        : $(this).attr('id') === 'selectAllMattLucky' ? 7
+                        : 9;  // Adjust based on actual column indexes
+
+        updateColumnCheckboxes(columnIndex, isChecked);
+    });
+
+    // Update all checkboxes in a column when "Select All" is toggled
+    function updateColumnCheckboxes(columnIndex, isChecked) {
+        const table = window.pokemonTable;
+
+        table.rows({ page: 'current' }).every(function () {
+            const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
+            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
+
+            if ($checkbox.length) {
+                $checkbox.prop('checked', isChecked);
+                $checkbox.attr('data-changed', 'true'); // Mark as changed
+                markChanged(); // Track change for "Select All"
+                console.log("Select All toggled, checkbox updated:", $checkbox); // Debug log
+            }
+        });
+    }
 
     // Collect changes from notes and checkboxes to send to the backend
     function collectChanges() {
@@ -24,7 +62,7 @@ $(document).ready(function () {
         const checkboxesData = [];
 
         // Collect changes from note edits
-        $('.note-edit').each(function () {
+        $('.note-edit[data-changed="true"]').each(function () {
             const pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
             const noteText = $(this).val();
             if (pokemonId !== undefined && noteText !== undefined) {
@@ -32,8 +70,8 @@ $(document).ready(function () {
             }
         });
 
-        // Collect checkbox changes for each category
-        $('.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox').each(function () {
+        // Collect checkbox changes marked with data-changed="true"
+        $('.matt-have-checkbox[data-changed="true"], .matt-lucky-checkbox[data-changed="true"], .ipad-lucky-checkbox[data-changed="true"]').each(function () {
             const pokemonId = $(this).data('pokemon-id');
             let checkboxType;
             if ($(this).hasClass('matt-have-checkbox')) checkboxType = 'matt_have';
@@ -71,6 +109,10 @@ $(document).ready(function () {
             success: function () {
                 alert('Changes saved successfully!');
                 hasChanges = false; // Reset change tracker
+
+                // Reset `data-changed` attribute on all checkboxes and note edits after save
+                $('.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox, .note-edit').removeAttr('data-changed');
+                console.log("Changes saved, hasChanges reset to:", hasChanges); // Debug log
             },
             error: function () {
                 alert('Failed to save changes. Please try again.');
