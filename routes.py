@@ -144,19 +144,24 @@ def init_routes(app, google):
                     new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
                     db.session.add(new_note)
 
-        # Process checkboxes (Matt and iPad)
-        checkboxes = data.get('checkboxes', [])
-        for checkbox in checkboxes:
-            pokemon_id = checkbox.get('pokemon_id')
-            checkbox_type = checkbox.get('type')
-            value = checkbox.get('value')
+        # Iterate over checkboxes data
+        for checkbox in data.get('checkboxes', []):
+            pokemon_id = checkbox['pokemon_id']
+            checkbox_type = checkbox['type']
+            checked_value = checkbox['value'] == 'Yes'  # Convert to boolean
 
-            if checkbox_type == 'matt_have':
-                pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
-                pokemon.user_2_living_dex = True if value == 'Yes' else False
-            elif checkbox_type == 'ipad_lucky':
-                pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
-                pokemon.user_0_lucky = True if value == 'Yes' else False
+            # Fetch the correct Pokemon entry
+            pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
+            if pokemon:
+                if checkbox_type == 'matt_lucky':
+                    pokemon.user_2_lucky = checked_value  # Update Matt's lucky dex field
+                elif checkbox_type == 'matt_have':
+                    pokemon.user_2_living_dex = checked_value
+                elif checkbox_type == 'ipad_lucky':
+                    pokemon.user_0_lucky = checked_value
+                
+                # Save the change to the database
+                db.session.add(pokemon)
 
         try:
             db.session.commit()

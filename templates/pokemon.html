@@ -10,44 +10,11 @@
         <a href="https://pokemondb.net/go/pokedex" target="_blank">Pokémon DB</a>.
     </p>
 
-    <!-- Filter row above the table -->
-    <div class="row mb-3">
-        <!-- Name Search -->
-        <div class="col-md-3">
-            <label for="searchName">Name:</label>
-            <input type="text" id="searchName" class="form-control" placeholder="Search Name">
-        </div>
-
-        <!-- Type Filter -->
-        <div class="col-md-3">
-            <label for="filterType">Type:</label>
-            <select id="filterType" class="form-control">
-                <option value="">All</option>
-                <!-- Add all type options -->
-                {% for type in ['Grass', 'Poison', 'Fire', 'Water', 'Electric', 'Ice', 'Fighting', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'] %}
-                <option value="{{ type }}">{{ type }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <!-- Show entries selector -->
-        <div class="col-md-2">
-            <label for="showEntries">Show entries:</label>
-            <select id="showEntries" class="form-control">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="-1">-All-</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- Additional Filters -->
-    <div class="row mb-3">
+    <!-- Combined Filters and Buttons Row -->
+    <div class="row mb-3 align-items-center">
         <!-- Legendary Filter -->
-        <div class="col-md-3">
-            <label for="filterLegendary">Legendary:</label>
+        <div class="col-md-2 col-sm-6 mb-2">
+            <label for="filterLegendary" class="form-label">Legendary:</label>
             <select id="filterLegendary" class="form-control">
                 <option value="">All</option>
                 <option value="Yes">Yes</option>
@@ -56,8 +23,8 @@
         </div>
 
         <!-- Mythical Filter -->
-        <div class="col-md-3">
-            <label for="filterMythical">Mythical:</label>
+        <div class="col-md-2 col-sm-6 mb-2">
+            <label for="filterMythical" class="form-label">Mythical:</label>
             <select id="filterMythical" class="form-control">
                 <option value="">All</option>
                 <option value="Yes">Yes</option>
@@ -66,25 +33,34 @@
         </div>
 
         <!-- Ultra Beast Filter -->
-        <div class="col-md-3">
-            <label for="filterUltraBeast">Ultra Beast:</label>
+        <div class="col-md-2 col-sm-6 mb-2">
+            <label for="filterUltraBeast" class="form-label">Ultra Beast:</label>
             <select id="filterUltraBeast" class="form-control">
                 <option value="">All</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
             </select>
         </div>
-    </div>
 
-    <!-- Buttons -->
-    <div class="mb-3">
-        {% if 'user' in session %}
-            <button id="selectAllButton" class="btn btn-primary">Select All</button>
-            <button id="deselectAllButton" class="btn btn-secondary">Deselect All</button>
-            <button id="editNotesButton" class="btn btn-warning">Edit Notes</button>
-            <button id="saveAllChangesButton" class="btn btn-success" style="display: none;">Save Changes</button>
-        {% endif %}
-        <button id="resetFiltersButton" class="btn btn-secondary">Reset All</button>
+        <!-- Show entries selector -->
+        <div class="col-md-2 col-sm-6 mb-2">
+            <label for="showEntries" class="form-label">Show entries:</label>
+            <select id="showEntries" class="form-control">
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="-1">-All-</option>
+            </select>
+        </div>
+
+        <!-- Save Changes and Reset All Buttons -->
+        <div class="col-md-4 d-flex justify-content-end">
+            {% if 'user' in session %}
+            <button id="saveAllChangesButton" class="btn btn-success btn-lg me-2">Save Changes</button>
+            {% endif %}
+            <button id="resetFiltersButton" class="btn btn-warning btn-lg">Reset All</button>
+        </div>
     </div>
 
     <!-- Table for Pokémon List -->
@@ -93,15 +69,24 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Image</th>
+                    <th><i class="fas fa-camera"></i></th>
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Brady</th>
-                    <th>Brady Lucky</th>
-                    <th>Matt</th>
-                    <th>Matt Lucky</th>
-                    <th>iPad</th>
-                    <th>iPad Lucky</th>
+                    <th>Brady 👤</th>
+                    <th>Brady 🎲</th>
+                    <th>
+                        <div>Matt 👤<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMatt">
+                    </th>
+                    <th>
+                        <div>Matt 🎲<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMattLucky">
+                    </th>
+                    <th>iPad 👤</th>
+                    <th>
+                        <div>iPad 🎲<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAlliPadLucky">
+                    </th>
                     <th>Note</th>
                     <!-- Hidden columns for filters -->
                     <th style="display: none;">Legendary</th>

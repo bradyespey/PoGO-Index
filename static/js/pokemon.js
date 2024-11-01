@@ -1,49 +1,29 @@
 $(document).ready(function () {
-    // === EDIT MODE FUNCTIONS ===
+    let hasChanges = false; // Track if changes were made
 
-    let editMode = false;
-
-    function enableEditMode() {
-        editMode = true;
+    // === INITIALIZE EDIT MODE (ALWAYS ON FOR LOGGED-IN USERS) ===
+    function initializeEditMode() {
         $('.note-display').hide();
         $('.note-edit').show();
-        $('#editNotesButton').text('Cancel Editing');
         $('#saveAllChangesButton').show();
     }
 
-    function disableEditMode() {
-        editMode = false;
-        $('.note-display').show();
-        $('.note-edit').hide();
-        $('#editNotesButton').text('Edit Notes');
-        $('#saveAllChangesButton').hide();
+    initializeEditMode(); // Always in edit mode if logged in
+
+    // Track changes on checkboxes and note inputs
+    function trackChanges() {
+        hasChanges = true;
     }
 
-    $('#editNotesButton').on('click', function () {
-        if (!editMode) {
-            $.get('/pogo/is_authenticated', function (response) {
-                if (response.authenticated) {
-                    enableEditMode();
-                } else {
-                    const currentUrl = window.location.pathname + window.location.search;
-                    window.location.href = '/pogo/login?next=' + encodeURIComponent(currentUrl) + '&edit=true';
-                }
-            }).fail(function () {
-                alert('Failed to check authentication status.');
-            });
-        } else {
-            disableEditMode();
-        }
-    });
+    // Attach event listeners to track changes
+    $('.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox, .note-edit').on('change', trackChanges);
 
-    if (window.location.search.includes('edit=true')) {
-        enableEditMode();
-    }
-
+    // Collect changes from notes and checkboxes to send to the backend
     function collectChanges() {
         const notesData = [];
         const checkboxesData = [];
 
+        // Collect changes from note edits
         $('.note-edit').each(function () {
             const pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
             const noteText = $(this).val();
@@ -52,11 +32,16 @@ $(document).ready(function () {
             }
         });
 
-        $('.matt-have-checkbox, .ipad-lucky-checkbox').each(function () {
+        // Collect checkbox changes for each category
+        $('.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox').each(function () {
             const pokemonId = $(this).data('pokemon-id');
-            const checkboxType = $(this).hasClass('matt-have-checkbox') ? 'matt_have' : 'ipad_lucky';
+            let checkboxType;
+            if ($(this).hasClass('matt-have-checkbox')) checkboxType = 'matt_have';
+            else if ($(this).hasClass('matt-lucky-checkbox')) checkboxType = 'matt_lucky';
+            else if ($(this).hasClass('ipad-lucky-checkbox')) checkboxType = 'ipad_lucky';
+
             const checkedValue = $(this).is(':checked') ? 'Yes' : 'No';
-            if (pokemonId !== undefined) {
+            if (pokemonId !== undefined && checkboxType !== undefined) {
                 checkboxesData.push({
                     pokemon_id: pokemonId,
                     type: checkboxType,
@@ -68,8 +53,16 @@ $(document).ready(function () {
         return { notes: notesData, checkboxes: checkboxesData };
     }
 
+    // Save changes when "Save Changes" button is clicked
     $('#saveAllChangesButton').on('click', function () {
+        if (!hasChanges) {
+            alert("No changes to save!");
+            return;
+        }
+
         const changes = collectChanges();
+        console.log("Changes being sent to backend:", changes);
+
         $.ajax({
             url: '/pogo/save-all-changes',
             method: 'POST',
@@ -77,12 +70,7 @@ $(document).ready(function () {
             data: JSON.stringify(changes),
             success: function () {
                 alert('Changes saved successfully!');
-                $('.note-edit').each(function () {
-                    const noteText = $(this).val();
-                    $(this).hide();
-                    $(this).siblings('.note-display').text(noteText).show();
-                });
-                disableEditMode();
+                hasChanges = false; // Reset change tracker
             },
             error: function () {
                 alert('Failed to save changes. Please try again.');
@@ -90,25 +78,14 @@ $(document).ready(function () {
         });
     });
 
-    // === SELECT ALL/DESELECT ALL CHECKBOXES ===
-
-    $('#selectAllButton').on('click', function () {
-        $('.matt-have-checkbox:visible, .ipad-lucky-checkbox:visible').prop('checked', true);
-    });
-
-    $('#deselectAllButton').on('click', function () {
-        $('.matt-have-checkbox:visible, .ipad-lucky-checkbox:visible').prop('checked', false);
-    });
-
     // === DATA TABLE INITIALIZATION AND FILTERING ===
 
     function applyFilter(dataTable, filter, value) {
         if (filter.type === 'select') {
             if (value) {
-                dataTable
-                    .column(filter.columnIndex)
-                    .search('^' + $.fn.dataTable.util.escapeRegex(value) + '$', true, false)
-                    .draw();
+                dataTable.column(filter.columnIndex)
+                         .search('^' + $.fn.dataTable.util.escapeRegex(value) + '$', true, false)
+                         .draw();
             } else {
                 dataTable.column(filter.columnIndex).search('', true, false).draw();
             }
@@ -212,12 +189,20 @@ $(document).ready(function () {
 
     $('#resetFiltersButton').on('click', function () {
         if (window.pokemonTable) {
+            // Clear all column filters and search fields
             window.pokemonTable.search('').columns().search('').draw();
+    
+            // Reset dropdown filters
             $('#searchName, #filterType, #filterLegendary, #filterMythical, #filterUltraBeast').val('');
             const clonedHeader = window.pokemonTable.table().header();
             $(clonedHeader).find('input, select').val('');
+            
+            // Reset entries to default value of 10
             $('#showEntries').val('10');
             window.pokemonTable.page.len(10).draw();
+    
+            // Reset sorting to first column in ascending order
+            window.pokemonTable.order([0, 'asc']).draw();
         }
     });
 
@@ -229,9 +214,10 @@ $(document).ready(function () {
         scrollX: true,
         autoWidth: false,
         paging: true,
+        ordering: true,
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        stateSave: true,
+        stateSave: false,
         searching: true,
         lengthChange: false,
         showEntriesSelector: '#showEntries',
@@ -259,7 +245,10 @@ $(document).ready(function () {
             { title: 'Mythical', filterType: null },
             { title: 'Ultra Beast', filterType: null }
         ],
-        columnDefs: [{ targets: [11, 12, 13], visible: false, searchable: true }],
+        columnDefs: [
+            { targets: [6, 7, 9], orderable: false },
+            { targets: [11, 12, 13], orderable: false, visible: false, searchable: true }
+        ],
         extraFilters: [
             { selector: '#searchName', columnIndex: 2, type: 'text' },
             { selector: '#filterType', columnIndex: 3, type: 'select' },
@@ -268,4 +257,104 @@ $(document).ready(function () {
             { selector: '#filterUltraBeast', columnIndex: 13, type: 'select' }
         ]
     });
+
+    // === PREVENT SORTING ON HEADER CHECKBOXES ===
+
+    // Prevent click events on header checkboxes from triggering sort
+    $('#selectAllMatt, #selectAllMattLucky, #selectAlliPadLucky').on('click', function (e) {
+        e.stopPropagation();
+    });
+
+    // === SELECT ALL CHECKBOXES FUNCTIONALITY ===
+
+    // Function to update checkboxes in a column
+    function updateColumnCheckboxes(columnIndex, isChecked) {
+        var table = window.pokemonTable;
+
+        table.rows({ page: 'current' }).every(function (rowIdx, tableLoop, rowLoop) {
+            var data = this.data();
+            var $row = $(this.node());
+
+            var $checkboxCell = $row.find('td').eq(columnIndex);
+            var $checkbox = $checkboxCell.find('input[type="checkbox"]');
+            
+            if ($checkbox.length) {
+                $checkbox.prop('checked', isChecked);
+                $checkboxCell.attr('data-filter', isChecked ? 'Yes' : 'No');
+                hasChanges = true; // Track changes for "Select All"
+            }
+        });
+    }
+
+   // Event listeners for header checkboxes
+    $('#selectAllMatt').on('change', function () {
+        var isChecked = $(this).is(':checked');
+        hasChanges = true; // Track changes when "Select All" is used
+        updateColumnCheckboxes(6, isChecked);
+    });
+
+    $('#selectAllMattLucky').on('change', function () {
+        var isChecked = $(this).is(':checked');
+        hasChanges = true; // Track changes when "Select All" is used
+        updateColumnCheckboxes(7, isChecked);
+    });
+
+    $('#selectAlliPadLucky').on('change', function () {
+        var isChecked = $(this).is(':checked');
+        hasChanges = true; // Track changes when "Select All" is used
+        updateColumnCheckboxes(9, isChecked);
+    });
+
+    // Ensure that when a checkbox is manually changed, we update the header checkbox state
+    function updateHeaderCheckboxState(columnIndex, headerCheckboxId) {
+        var table = window.pokemonTable;
+
+        var allChecked = true;
+        var anyChecked = false;
+
+        table.rows({ page: 'current' }).every(function (rowIdx, tableLoop, rowLoop) {
+            var data = this.data();
+            var $row = $(this.node());
+
+            var $checkboxCell = $row.find('td').eq(columnIndex);
+            var $checkbox = $checkboxCell.find('input[type="checkbox"]');
+            if ($checkbox.length) {
+                if (!$checkbox.is(':checked')) {
+                    allChecked = false;
+                } else {
+                    anyChecked = true;
+                }
+            }
+        });
+
+        var $headerCheckbox = $('#' + headerCheckboxId);
+        if (allChecked) {
+            $headerCheckbox.prop('checked', true).prop('indeterminate', false);
+        } else if (anyChecked) {
+            $headerCheckbox.prop('checked', false).prop('indeterminate', true);
+        } else {
+            $headerCheckbox.prop('checked', false).prop('indeterminate', false);
+        }
+    }
+
+    // Event listeners for individual checkboxes to update header checkbox state
+    window.pokemonTable.on('draw', function () {
+        updateHeaderCheckboxState(6, 'selectAllMatt');
+        updateHeaderCheckboxState(7, 'selectAllMattLucky');
+        updateHeaderCheckboxState(9, 'selectAlliPadLucky');
+
+        $('input.matt-have-checkbox').off('change').on('change', function () {
+            updateHeaderCheckboxState(6, 'selectAllMatt');
+        });
+
+        $('input.matt-lucky-checkbox').off('change').on('change', function () {
+            updateHeaderCheckboxState(7, 'selectAllMattLucky');
+        });
+
+        $('input.ipad-lucky-checkbox').off('change').on('change', function () {
+            updateHeaderCheckboxState(9, 'selectAlliPadLucky');
+        });
+    });
+
+    window.pokemonTable.draw();
 });

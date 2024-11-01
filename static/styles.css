@@ -1,7 +1,7 @@
 /* === Global Styles === */
 body {
-    background-color: #f8f9fa; /* Light gray background */
-    color: #212529; /* Dark text color */
+    background-color: #f8f9fa;
+    color: #212529;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -22,9 +22,7 @@ body {
     margin-right: 5px;
 }
 
-.navbar-dark .navbar-nav .nav-link:hover {
-    color: #f1c40f !important;
-}
+.navbar-dark .navbar-nav .nav-link:hover { color: #f1c40f !important; }
 
 .navbar-dark .navbar-toggler {
     border-color: rgba(255, 255, 255, 0.7);
@@ -40,7 +38,7 @@ body {
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28 241, 196, 15, 1 %29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
 }
 
-/* === Main Heading and Section Headings === */
+/* === Headings === */
 main h2, h2 {
     color: #f1c40f;
     text-align: center;
@@ -51,9 +49,7 @@ main h2, h2 {
     font-size: 2.5rem;
 }
 
-@media (max-width: 576px) {
-    h2 { font-size: 2rem; }
-}
+@media (max-width: 576px) { h2 { font-size: 2rem; } }
 
 /* === Counts Section === */
 .card { border-radius: 10px; }
@@ -81,7 +77,9 @@ main h2, h2 {
 .descriptions a:hover { text-decoration: underline; }
 
 /* === Footer Styles === */
-footer { background-color: #333333; }
+footer {
+    background-color: #333333;
+}
 
 footer p { margin: 0; }
 
@@ -95,8 +93,11 @@ footer p { margin: 0; }
 }
 
 .table thead th {
+    padding: 4px 8px;
+    font-size: 0.9rem;
     background-color: #e9ecef;
     color: #495057;
+    text-align: center;
 }
 
 .table tbody tr {
@@ -104,14 +105,27 @@ footer p { margin: 0; }
     color: #212529;
 }
 
-.table tbody tr:nth-of-type(even) { background-color: #f8f9fa; }
+.table tbody tr:nth-of-type(even) {
+    background-color: #f8f9fa;
+}
 
-.table tbody tr:hover { background-color: #dee2e6; }
+.table tbody tr:hover {
+    background-color: #dee2e6;
+}
+
+.table td {
+    text-align: center;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+}
 
 .table td img {
     width: 50px;
     height: 50px;
 }
+
+.status-yes { color: #28a745; font-weight: bold; } /* Green checkmark */
+.status-no { color: #dc3545; font-weight: bold; } /* Red cross */
 
 /* Responsive Table Adjustments */
 .table-responsive {
@@ -121,16 +135,12 @@ footer p { margin: 0; }
     -webkit-overflow-scrolling: touch;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
     .table td:nth-child(4),
     .table td:nth-child(5),
     .table td:nth-child(6),
     .table td:nth-child(8),
-    .table td:nth-child(9) {
-        display: none;
-    }
-
+    .table td:nth-child(9),
     .table th:nth-child(4),
     .table th:nth-child(5),
     .table th:nth-child(6),
@@ -153,14 +163,15 @@ footer p { margin: 0; }
     }
 }
 
-/* === DataTables Overrides === */
+/* === DataTables Custom Styling === */
 .dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_info {
-    color: #ffffff;
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate .paginate_button,
+.dataTables_wrapper .dataTables_paginate .ellipsis {
+    color: #f1c40f;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-    color: #ffffff !important;
     background-color: #555555 !important;
     border: 1px solid #444444;
     border-radius: 4px;
@@ -181,12 +192,7 @@ footer p { margin: 0; }
     color: #666666 !important;
 }
 
-.dataTables_wrapper .dataTables_paginate .ellipsis {
-    color: #ffffff !important;
-}
-
-/* Hide default DataTables search box */
-div.dataTables_filter { display: none; }
+div.dataTables_filter { display: none; } /* Hide default DataTables search box */
 
 .dataTables_wrapper .dataTables_filter input,
 .dataTables_wrapper .dataTables_length select {
@@ -206,7 +212,6 @@ table.dataTable thead tr.filters {
 
 table.dataTable thead tr.filters th {
     padding: 8px;
-    margin: 0;
     border-bottom: 2px solid #dee2e6;
     background-color: #e9ecef;
     position: sticky;
@@ -218,35 +223,67 @@ table.dataTable thead tr.filters input {
     width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    margin: 0;
     border: 1px solid #ced4da;
 }
 
-/* Avoid overlapping issues */
-.dataTables_scrollHeadInner, .dataTables_scrollHead {
-    overflow: visible !important;
+/* Remove redundant black sorting icons */
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_desc:before {
+    content: "" !important;
 }
 
-/* === Buttons === */
-#editNotesButton,
-#saveAllNotesButton,
-#resetFiltersButton,
-#updateButton {
-    background-color: #f1c40f;
-    color: #000000;
-    border: none;
-    border-radius: 5px;
-    padding: 8px 15px;
-    font-size: 14px;
-    cursor: pointer;
-    margin: 5px;
+/* Sort Indicators */
+table.dataTable thead .sorting_asc:after { content: " ▲"; }
+table.dataTable thead .sorting_desc:after { content: " ▼"; }
+
+/* Center checkboxes in header */
+th input[type="checkbox"] { margin: 0 auto; display: block; }
+
+/* === Button Styling === */
+.btn {
+    font-weight: bold;
+    border-radius: 6px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-#editNotesButton:hover,
-#saveAllNotesButton:hover,
-#resetFiltersButton:hover,
-#updateButton:hover {
-    background-color: #d4ac0d;
+/* Save Changes Button */
+#saveAllChangesButton {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+#saveAllChangesButton:hover {
+    background-color: #218838;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Reset All Button */
+#resetFiltersButton {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: black;
+}
+
+#resetFiltersButton:hover {
+    background-color: #e0a800;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Button Spacing */
+.btn + .btn { margin-left: 8px; }
+
+/* Mobile Button Adjustments */
+@media (max-width: 768px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
 }
 
 /* === Preloader Styles === */
@@ -262,41 +299,15 @@ table.dataTable thead tr.filters input {
 
 body.loaded #preloader { display: none; }
 
-/* === DataTables Bright Yellow Text === */
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate {
-    color: #f1c40f;
-}
-
-/* DataTables Pagination Styling */
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-    color: #333333 !important;
-    background-color: #e0e0e0 !important;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    margin: 2px;
-    padding: 5px 10px;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background-color: #cccccc !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background-color: #f1c40f !important;
-    color: #333333 !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-    color: #666666 !important;
-    background-color: #e0e0e0 !important;
-}
-
 /* === Responsive Navbar === */
 @media (max-width: 576px) {
-    .navbar-nav { text-align: center; }
-    .navbar-nav .nav-link { justify-content: center; }
-    .card-text { font-size: 2rem; }
+    .navbar-nav {
+        text-align: center;
+    }
+    .navbar-nav .nav-link {
+        justify-content: center;
+    }
+    .card-text {
+        font-size: 2rem;
+    }
 }
