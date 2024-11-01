@@ -130,7 +130,7 @@
                     <td>{{ pokemon.brady_lucky_dex }}</td>
 
                     <!-- Matt Living Dex (Checkbox for editable fields) -->
-                    <td>
+                    <td data-filter="{{ 'Yes' if pokemon.matt_have == 'Yes' else 'No' }}">
                         {% if 'user' in session %}
                             <input type="checkbox" class="matt-have-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.matt_have == 'Yes' %}checked{% endif %}>
                         {% else %}
@@ -139,7 +139,7 @@
                     </td>
 
                     <!-- Matt Lucky Dex -->
-                    <td>
+                    <td data-filter="{{ 'Yes' if pokemon.matt_lucky == 'Yes' else 'No' }}">
                         {% if 'user' in session %}
                             <input type="checkbox" class="matt-lucky-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.matt_lucky == 'Yes' %}checked{% endif %}>
                         {% else %}
@@ -151,7 +151,7 @@
                     <td class="ipad-column">{{ pokemon.need_on_ipad }}</td>
 
                     <!-- iPad Lucky Dex -->
-                    <td>
+                    <td data-filter="{{ 'Yes' if pokemon.ipad_lucky_dex == 'Yes' else 'No' }}">
                         {% if 'user' in session %}
                             <input type="checkbox" class="ipad-lucky-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.ipad_lucky_dex == 'Yes' %}checked{% endif %}>
                         {% else %}

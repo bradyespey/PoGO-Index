@@ -1,5 +1,3 @@
-// /static/js/pokemon.js
-
 $(document).ready(function () {
     // === EDIT MODE FUNCTIONS ===
 
