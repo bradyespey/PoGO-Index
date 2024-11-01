@@ -7,8 +7,8 @@
     <h2 class="mt-4 text-center">Notes Data</h2>
     <p class="text-center">This page allows you to view and search through Pokémon notes.</p>
 
-    <!-- Filter row above the table -->
-    <div class="row mb-3">
+    <!-- Combined filter row with "Show entries" and "Reset All" button in one row -->
+    <div class="row mb-3 align-items-center">
         <!-- Name Search -->
         <div class="col-md-3">
             <label for="searchName">Name:</label>
@@ -20,22 +20,20 @@
             <label for="searchNote">Note:</label>
             <input type="text" id="searchNote" class="form-control" placeholder="Search Note">
         </div>
-    </div>
 
-    <!-- Show entries selector and Reset All button -->
-    <div class="row mb-3">
-        <div class="col-md-2">
-            <label for="showEntries">Show entries:</label>
-            <select id="showEntries" class="form-control">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="-1">-All-</option>
-            </select>
-        </div>
-        <div class="col-md-6 d-flex align-items-end">
-            <button id="resetFiltersButton" class="btn btn-warning mt-2">Reset All</button>
+        <!-- Show entries selector and Reset All button -->
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="input-group">
+                <label for="showEntries" class="mr-2">Show entries:</label>
+                <select id="showEntries" class="form-control">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="-1">-All-</option>
+                </select>
+                <button id="resetFiltersButton" class="btn btn-warning ml-2">Reset All</button>
+            </div>
         </div>
     </div>
 
@@ -58,7 +56,7 @@
                         <td>{{ note.note_text }}</td>
                     </tr>
                     {% endif %}
-                    {% endfor %}
+                {% endfor %}
             </tbody>
         </table>
     </div>

@@ -11,7 +11,7 @@
     </p>
 
     <!-- Filter row above the table -->
-    <div class="row mb-3">
+    <div class="row mb-3 align-items-center">
         <!-- Name Search -->
         <div class="col-md-3">
             <label for="searchName">Name:</label>
@@ -29,22 +29,20 @@
                 <option value="Paradox">Paradox</option>
             </select>
         </div>
-    </div>
 
-    <!-- Show entries selector and Reset All button -->
-    <div class="row mb-3">
-        <div class="col-md-2">
-            <label for="showEntries">Show entries:</label>
-            <select id="showEntries" class="form-control">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="-1">-All-</option>
-            </select>
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button id="resetFiltersButton" class="btn btn-warning mt-2">Reset All</button>
+        <!-- Show entries selector and Reset All button -->
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="input-group">
+                <label for="showEntries" class="mr-2">Show entries:</label>
+                <select id="showEntries" class="form-control">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="-1">-All-</option>
+                </select>
+                <button id="resetFiltersButton" class="btn btn-warning ml-2">Reset All</button>
+            </div>
         </div>
     </div>
 

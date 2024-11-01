@@ -10,30 +10,28 @@
         <a href="https://www.serebii.net/pokemongo/shadowpokemon.shtml" target="_blank">Serebii.net</a>.
     </p>
 
-    <!-- Filter row above the table -->
-    <div class="row mb-3">
+    <!-- Combined filter row with "Show entries" and "Reset All" button in one row -->
+    <div class="row mb-3 align-items-center">
         <!-- Name Search -->
         <div class="col-md-3">
             <label for="searchName">Name:</label>
             <input type="text" id="searchName" class="form-control" placeholder="Search Name">
         </div>
 
-        <!-- Show entries selector -->
-        <div class="col-md-2">
-            <label for="showEntries">Show entries:</label>
-            <select id="showEntries" class="form-control">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="-1">-All-</option>
-            </select>
+        <!-- Show entries selector and Reset All button -->
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="input-group">
+                <label for="showEntries" class="mr-2">Show entries:</label>
+                <select id="showEntries" class="form-control">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="-1">-All-</option>
+                </select>
+                <button id="resetFiltersButton" class="btn btn-warning ml-2">Reset All</button>
+            </div>
         </div>
-    </div>
-
-    <!-- Reset All button -->
-    <div class="mb-3">
-        <button id="resetFiltersButton" class="btn btn-warning">Reset All</button>
     </div>
 
     <!-- Table for Rocket Pokémon -->
