@@ -35,13 +35,14 @@
         </div>
 
         <!-- Show entries selector -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="showEntries">Show entries:</label>
             <select id="showEntries" class="form-control">
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
+                <option value="-1">-All-</option>
             </select>
         </div>
     </div>
@@ -75,4 +76,9 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
 {% endblock %}

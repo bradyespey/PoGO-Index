@@ -125,14 +125,16 @@
     <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
 
-    <!-- Custom Modular JavaScript Files -->
+    <!-- Custom Modular JavaScript Files
     <script src="{{ url_for('static', filename='js/initializeDataTable.js') }}"></script>
     <script src="{{ url_for('static', filename='js/initializeFilters.js') }}"></script>
     <script src="{{ url_for('static', filename='js/editMode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/resetFilters.js') }}"></script>
     <script src="{{ url_for('static', filename='js/selectAll.js') }}"></script>
+    -->
 
-    <!-- Additional Script for Initializing All Tables -->
-    <script src="{{ url_for('static', filename='js/initAllTables.js') }}"></script>
+    {% block scripts %}
+        <!-- Place for page-specific scripts, like pokemon.js for Pokémon page -->
+    {% endblock %}
 </body>
 </html>

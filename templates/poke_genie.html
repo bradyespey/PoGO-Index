@@ -10,19 +10,20 @@
     <!-- Filter row above the table -->
     <div class="row mb-3">
         <!-- Name Search -->
-        <div class="col-md-6">
+        <div class="col-md-3">
             <label for="searchName">Name:</label>
             <input type="text" id="searchName" class="form-control" placeholder="Search Name">
         </div>
 
         <!-- Show entries selector -->
-        <div class="col-md-6">
+        <div class="col-md-2">
             <label for="showEntries">Show entries:</label>
             <select id="showEntries" class="form-control">
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
+                <option value="-1">-All-</option>
             </select>
         </div>
     </div>
@@ -98,4 +99,9 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/poke_genie.js') }}"></script>
 {% endblock %}
