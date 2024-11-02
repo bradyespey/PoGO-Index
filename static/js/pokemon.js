@@ -252,7 +252,7 @@ $(document).ready(function () {
 
     window.pokemonTable = initializeDataTable({
         tableSelector: '#pokemonTable',
-        responsive: true,
+        responsive: false,
         scrollX: true,
         autoWidth: false,
         paging: true,
