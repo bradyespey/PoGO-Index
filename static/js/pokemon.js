@@ -249,7 +249,7 @@ $(document).ready(function () {
     });
 
     // === INITIALIZE ALL TABLES ===
-
+    
     window.pokemonTable = initializeDataTable({
         tableSelector: '#pokemonTable',
         responsive: false,
@@ -267,7 +267,7 @@ $(document).ready(function () {
             { title: '#', filterType: 'numberExact' },
             { title: 'Image', filterType: null },
             { title: 'Name', filterType: 'text' },
-            { title: 'Type', filterType: 'select', options: ['Grass', 'Poison', 'Fire', 'Water', 'Electric', 'Ice', 'Fighting', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'] },
+            { title: 'Type', filterType: 'select', options: ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flying', 'Ghost', 'Grass', 'Ground', 'Ice', 'Poison', 'Psychic', 'Rock', 'Steel', 'Water'] },
             { title: 'Brady', filterType: 'select', options: ['Yes', 'No'] },
             { title: 'Brady Lucky', filterType: 'select', options: ['Yes', 'No'] },
             { title: 'Matt', filterType: 'select', options: ['Yes', 'No'] },
@@ -288,6 +288,7 @@ $(document).ready(function () {
             { title: 'Ultra Beast', filterType: null }
         ],
         columnDefs: [
+            { targets: "_all", width: "100px" },  // Default width for all columns
             { targets: [6, 7, 9], orderable: false },
             { targets: [11, 12, 13], orderable: false, visible: false, searchable: true }
         ],

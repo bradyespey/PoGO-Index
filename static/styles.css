@@ -312,9 +312,7 @@ body.loaded #preloader { display: none; }
     }
 }
 
-/* =============================
-   Responsive Tables
-   ============================= */
+/* === Responsive Tables === */
 
    .table-responsive {
     overflow-x: auto;
@@ -323,4 +321,20 @@ body.loaded #preloader { display: none; }
 /* Optional: make sure the table takes the full width within the responsive container */
 .table-responsive .display.nowrap {
     width: 100%;
+}
+
+/* === Set Columns to Auto-Width === */
+/* Force all columns to a narrower default width and prevent wrapping */
+#pokemonTable th,
+#pokemonTable td {
+    width: 100px;         /* Default column width */
+    white-space: nowrap;  /* Prevent text wrapping */
+    text-align: center;   /* Center-align content for consistency */
+}
+
+/* Make input fields narrower */
+#pokemonTable thead input {
+    width: 80% !important;
+    padding: 4px;
+    font-size: 12px;
 }
