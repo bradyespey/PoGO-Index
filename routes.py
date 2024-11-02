@@ -273,7 +273,7 @@ def init_routes(app, google):
     # Login route
     @app.route('/pogo/login')
     def login():
-        redirect_url = url_for('auth', _external=True)
+        redirect_url = url_for('authorize', _external=True)
         print(f"Google OAuth redirect URL: {redirect_url}")  # Log the redirect URI being used
         return google.authorize_redirect(redirect_url)
 
