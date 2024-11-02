@@ -5,6 +5,7 @@ from models import db
 from routes import init_routes
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Load environment variables
 load_dotenv()
@@ -23,6 +24,10 @@ if env == 'production' and db_path and db_path.startswith("postgres://"):
     db_path = db_path.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Apply ProxyFix to ensure Heroku recognizes requests as HTTPS
+if env == 'production':
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Initialize the database and migrations
 db.init_app(app)
