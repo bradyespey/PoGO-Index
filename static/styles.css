@@ -311,3 +311,16 @@ body.loaded #preloader { display: none; }
         font-size: 2rem;
     }
 }
+
+/* =============================
+   Responsive Tables
+   ============================= */
+
+   .table-responsive {
+    overflow-x: auto;
+}
+
+/* Optional: make sure the table takes the full width within the responsive container */
+.table-responsive .display.nowrap {
+    width: 100%;
+}
