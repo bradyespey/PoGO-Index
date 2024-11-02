@@ -302,8 +302,10 @@ def init_routes(app, google):
     # Logout route to clear the session
     @app.route('/pogo/logout')
     def logout():
-        session.pop('user', None)
-        return redirect(url_for('login'))
+        # Clear all session data related to the user
+        session.clear()
+        # Redirect to the homepage or a logout confirmation page instead of login
+        return redirect(url_for('info_page'))  # Replace 'info_page' with your homepage or landing page
 
     ### Protected Routes ###
 
