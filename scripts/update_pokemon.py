@@ -40,6 +40,7 @@ def fetch_pokemon_data():
 
     local_image_dir = '/Users/bradyespey/Projects/GitHub/PoGO/static/images/mons'
     relative_image_url_base = '/static/images/mons'
+    os.makedirs(local_image_dir, exist_ok=True)  # Ensure image directory exists
 
     count_inserted, count_updated, count_skipped, count_with_images = 0, 0, 0, 0
 
@@ -54,16 +55,25 @@ def fetch_pokemon_data():
             print(f"Skipping form {name}")
             continue
 
-        # Construct image filename
+        # Construct image filename and paths
         image_filename = f"{name.lower().replace(' ', '-').replace(':', '')}.png"
         local_image_path = os.path.join(local_image_dir, image_filename)
         relative_image_url = f"{relative_image_url_base}/{image_filename}"
+        
+        # Download image if it doesn't exist
+        if not os.path.exists(local_image_path):
+            image_url = f"https://img.pokemondb.net/sprites/go/normal/{image_filename}"
+            try:
+                img_data = requests.get(image_url).content
+                with open(local_image_path, 'wb') as img_file:
+                    img_file.write(img_data)
+                print(f"Downloaded image for {name}")
+                count_with_images += 1
+            except requests.RequestException:
+                print(f"Failed to download image for {name}")
+        
+        # Update database with image URL
         image_url_to_store = relative_image_url if os.path.exists(local_image_path) else None
-
-        # Count images if present
-        if image_url_to_store:
-            count_with_images += 1
-
         # Fetch or create Pokémon entry in the database
         pokemon = Pokemon.query.filter_by(dex_number=dex_number).first()
         if not pokemon:
