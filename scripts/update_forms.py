@@ -8,7 +8,7 @@ import time
 # Add the project root directory to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# Now, you can import app and models after sys.path is correctly set
+# Import app and models after sys.path is correctly set
 from app import app, db
 from models import Form
 
@@ -53,15 +53,17 @@ def fetch_forms_data(app_context):
                     count_skipped += 1
             else:
                 # Insert new entry
+                print(f"Inserting new form Pokémon {name} with dex number {dex_number} and form {form}")
                 new_form = Form(dex_number=dex_number, name=name, form=form)
                 db.session.add(new_form)
                 db.session.commit()
                 count_inserted += 1
 
-        print(f"Finished processing {len(forms_data)} forms.")
-        print(f"Forms added: {count_inserted}")
-        print(f"Forms updated: {count_updated}")
-        print(f"Forms skipped: {count_skipped}")
+        # Final output summary
+        print(f"Finished processing {len(forms_data)} forms")
+        print(f"Total Forms added: {count_inserted}")
+        print(f"Total Forms updated: {count_updated}")
+        print(f"Total Forms skipped: {count_skipped}")
 
 if __name__ == "__main__":
     from app import app

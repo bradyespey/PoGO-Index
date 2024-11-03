@@ -36,20 +36,20 @@ creds = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_IN
 drive_service = build('drive', 'v3', credentials=creds)
 
 def get_or_create_default_user():
-    """Get or create a default user for associating Poke Genie entries."""
-    user = User.query.filter_by(email='default@example.com').first()
-    if not user:
-        user = User(
-            google_id='default_google_id',
-            name='Default User',
-            email='default@example.com'
-        )
-        db.session.add(user)
-        db.session.commit()
-        print(f"Created default user with user_id: {user.id}")
-    else:
-        print(f"Using existing default user with user_id: {user.id}")
-    return user.id
+    # Check if a user with google_id 'default_google_id' already exists
+    default_user = User.query.filter_by(google_id='default_google_id').first()
+    if default_user:
+        return default_user.id  # Return the existing user's ID if found
+
+    # Create a new default user if it doesn't exist
+    new_user = User(
+        google_id='default_google_id',
+        name='Default User',
+        email='default@example.com'
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return new_user.id  # Return the new user's ID
 
 def download_latest_csv_from_drive():
     """Download the latest CSV file from Google Drive."""
@@ -124,7 +124,7 @@ def import_poke_genie_data(app_context):
                 index = int(row[0])
                 name = row[1]
                 form = row[2]
-                pokemon_number = int(row[3])
+                pokemon_number = int(row[3])  # Dex number
                 gender = row[4]
                 cp = int(row[5]) if row[5] else None
                 hp = int(row[6]) if row[6] else None
@@ -178,6 +178,7 @@ def import_poke_genie_data(app_context):
                 if existing_entry:
                     count_skipped += 1
                 else:
+                    print(f"Inserting new Poke Genie entry for Pokémon {name} with dex number {pokemon_number}")
                     # Add a new entry with all fields populated
                     new_entry = PokeGenieEntry(
                         index=index,
@@ -235,13 +236,9 @@ def import_poke_genie_data(app_context):
                     db.session.commit()
                     count_inserted += 1
 
-                # Log progress every 10 entries
-                if idx % 10 == 0:
-                    print(f"Processing entry {idx + 1}/{total_entries}...")
-
-            print(f"Total Poke Genie entries processed: {total_entries}")
-            print(f"Entries added: {count_inserted}")
-            print(f"Entries skipped: {count_skipped}")
+            print(f"Finished processing {total_entries} Poke Genie entries")
+            print(f"Total entries added: {count_inserted}")
+            print(f"Total entries skipped: {count_skipped}")
 
 if __name__ == "__main__":
     with app.app_context():

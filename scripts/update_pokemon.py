@@ -8,7 +8,7 @@ import time
 # Add the project root directory to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# Now, you can import app and models after sys.path is correctly set
+# Import app and models after sys.path is correctly set
 from app import app, db
 from models import Pokemon, PokeGenieEntry
 
@@ -43,7 +43,7 @@ def fetch_pokemon_data():
 
     count_inserted, count_updated, count_skipped, count_with_images = 0, 0, 0, 0
 
-    for idx, row in enumerate(rows):
+    for row in rows:
         cols = row.find_all("td")
         dex_number = int(cols[0].text.strip())
         name = cols[1].text.strip().replace("♀", "-f").replace("♂", "-m")
@@ -51,7 +51,7 @@ def fetch_pokemon_data():
 
         # Skip unwanted forms
         if any(form in name for form in FORMS_TO_SKIP):
-            print(f"Skipping form {name}.")
+            print(f"Skipping form {name}")
             continue
 
         # Construct image filename
@@ -60,16 +60,16 @@ def fetch_pokemon_data():
         relative_image_url = f"{relative_image_url_base}/{image_filename}"
         image_url_to_store = relative_image_url if os.path.exists(local_image_path) else None
 
-        # Count images
+        # Count images if present
         if image_url_to_store:
             count_with_images += 1
 
         # Fetch or create Pokémon entry in the database
-        pokemon = Pokemon.query.filter_by(id=dex_number).first()
+        pokemon = Pokemon.query.filter_by(dex_number=dex_number).first()
         if not pokemon:
-            print(f"Inserting new Pokémon {name} with dex number {dex_number}.")
+            print(f"Inserting new Pokémon {name} with dex number {dex_number}")
             pokemon = Pokemon(
-                id=dex_number,
+                dex_number=dex_number,
                 name=name,
                 type=type_,
                 image_url=image_url_to_store,
@@ -90,7 +90,7 @@ def fetch_pokemon_data():
             else:
                 count_skipped += 1
 
-        # Default each field according to requirements
+        # Default fields as specified
         pokemon.user_1_living_dex = False
         pokemon.user_1_lucky = False
         pokemon.user_0_living_dex = True
@@ -119,17 +119,13 @@ def fetch_pokemon_data():
         # Commit changes for each Pokémon to the database
         db.session.commit()
 
-        # Log progress every 10 entries
-        if idx % 10 == 0:
-            print(f"Processing Pokémon {idx + 1}/{len(rows)}...")
-
-    print(f"Finished processing {len(rows)} Pokémon.")
+    # Final output
+    print(f"Finished processing {len(rows)} Pokémon")
     print(f"Total Pokémon added: {count_inserted}")
     print(f"Total Pokémon updated: {count_updated}")
     print(f"Total Pokémon skipped: {count_skipped}")
     print(f"Total Pokémon with images: {count_with_images}")
 
 if __name__ == "__main__":
-    from app import app
     with app.app_context():
         fetch_pokemon_data()

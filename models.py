@@ -16,10 +16,10 @@ class User(db.Model):
     def __repr__(self):
         return f"<User {self.name}>"
 
-# Pokémon Model
 class Pokemon(db.Model):
     __tablename__ = 'pokemon'
     id = db.Column(db.Integer, primary_key=True)
+    dex_number = db.Column(db.Integer, unique=True, nullable=False)  # Add this line
     name = db.Column(db.String(100))
     type = db.Column(db.String(50))
     image_url = db.Column(db.String(255))
@@ -36,7 +36,7 @@ class Pokemon(db.Model):
     owners = db.relationship('OwnedPokemon', backref='pokemon', lazy=True)
 
     def __repr__(self):
-        return f"<Pokemon {self.id} - {self.name}>"
+        return f"<Pokemon {self.dex_number} - {self.name}>"
 
 # Association Table for User-Pokemon Ownership
 class OwnedPokemon(db.Model):
@@ -163,6 +163,20 @@ class Rocket(db.Model):
 
     def __repr__(self):
         return f"<Rocket {self.dex_number} - {self.name}>"
+
+# All Pokémon Model
+class AllPokemon(db.Model):
+    __tablename__ = 'all_pokemon'
+    id = db.Column(db.Integer, primary_key=True)
+    dex_number = db.Column(db.Integer, unique=True, nullable=False)
+    name = db.Column(db.String(100))
+    link = db.Column(db.String(255), nullable=True)
+    category = db.Column(db.String(100))  # Superscript category like "Starter", "Legendary", etc.
+    generation = db.Column(db.Integer)
+    released = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<AllPokemon {self.dex_number} - {self.name}>"
 
 # Note Model
 class Note(db.Model):

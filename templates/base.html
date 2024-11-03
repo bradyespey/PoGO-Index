@@ -41,7 +41,7 @@
                     <!-- Pokémon -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('pokemon') }}">
-                            <img src="{{ url_for('static', filename='images/normal.svg') }}" alt="Pokémon Icon" class="nav-icon"> Pokémon
+                            <img src="{{ url_for('static', filename='images/pogo_icon.png') }}" alt="Pokémon Icon" class="nav-icon"> Pokémon Go
                         </a>
                     </li>
                     <!-- Poke Genie -->
@@ -74,16 +74,22 @@
                             <img src="{{ url_for('static', filename='images/purified.svg') }}" alt="Forms Icon" class="nav-icon"> Forms
                         </a>
                     </li>
-                    <!-- Notes -->
+                    <!-- All Pokémon -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('notes') }}">
-                            <img src="{{ url_for('static', filename='images/notes.png') }}" alt="Notes Icon" class="nav-icon"> Notes
+                        <a class="nav-link" href="{{ url_for('all_pokemon') }}">
+                            <img src="{{ url_for('static', filename='images/normal.svg') }}" alt="All Pokémon Icon" class="nav-icon"> All Pokémon
                         </a>
                     </li>
                     <!-- Rocket -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('rocket') }}">
                             <img src="{{ url_for('static', filename='images/shadow.svg') }}" alt="Rocket Icon" class="nav-icon"> Rocket
+                        </a>
+                    </li>
+                    <!-- Notes -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('notes') }}">
+                            <img src="{{ url_for('static', filename='images/notes.png') }}" alt="Notes Icon" class="nav-icon"> Notes
                         </a>
                     </li>
                     <!-- Login/Logout Button -->
@@ -136,7 +142,7 @@
     -->
 
     {% block scripts %}
-        <!-- Place for page-specific scripts, like pokemon.js for Pokémon page -->
+        <!-- Place for page-specific scripts, like all_pokemon.js for All Pokémon page -->
     {% endblock %}
 </body>
 </html>

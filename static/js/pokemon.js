@@ -41,12 +41,12 @@ $(document).ready(function () {
 
     // Update all checkboxes in a column when "Select All" is toggled
     function updateColumnCheckboxes(columnIndex, isChecked) {
-        const table = window.pokemonTable;
-
+        var table = window.pokemonTable;
+    
         table.rows({ page: 'current' }).every(function () {
-            const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
-            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
-
+            var $checkboxCell = $(this.node()).find('td').eq(columnIndex);
+            var $checkbox = $checkboxCell.find('input[type="checkbox"]');
+    
             if ($checkbox.length) {
                 $checkbox.prop('checked', isChecked);
                 $checkbox.attr('data-changed', 'true'); // Mark as changed
@@ -54,30 +54,30 @@ $(document).ready(function () {
                 console.log("Select All toggled, checkbox updated:", $checkbox); // Debug log
             }
         });
-    }
+    }    
 
     // Collect changes from notes and checkboxes to send to the backend
     function collectChanges() {
         const notesData = [];
         const checkboxesData = [];
-
+    
         // Collect changes from note edits
-        $('.note-edit[data-changed="true"]').each(function () {
+        $('.note-edit[data-changed]').each(function () {
             const pokemonId = $(this).closest('tr').find('.hidden-pokemon-id').data('pokemon-id');
             const noteText = $(this).val();
             if (pokemonId !== undefined && noteText !== undefined) {
                 notesData.push({ pokemon_id: pokemonId, note: noteText });
             }
         });
-
-        // Collect checkbox changes marked with data-changed="true"
-        $('.matt-have-checkbox[data-changed="true"], .matt-lucky-checkbox[data-changed="true"], .ipad-lucky-checkbox[data-changed="true"]').each(function () {
+    
+        // Collect checkbox changes marked with data-changed attribute
+        $('.matt-have-checkbox[data-changed], .matt-lucky-checkbox[data-changed], .ipad-lucky-checkbox[data-changed]').each(function () {
             const pokemonId = $(this).data('pokemon-id');
             let checkboxType;
             if ($(this).hasClass('matt-have-checkbox')) checkboxType = 'matt_have';
             else if ($(this).hasClass('matt-lucky-checkbox')) checkboxType = 'matt_lucky';
             else if ($(this).hasClass('ipad-lucky-checkbox')) checkboxType = 'ipad_lucky';
-
+    
             const checkedValue = $(this).is(':checked') ? 'Yes' : 'No';
             if (pokemonId !== undefined && checkboxType !== undefined) {
                 checkboxesData.push({
@@ -87,9 +87,9 @@ $(document).ready(function () {
                 });
             }
         });
-
+    
         return { notes: notesData, checkboxes: checkboxesData };
-    }
+    }    
 
     // Save changes when "Save Changes" button is clicked
     $('#saveAllChangesButton').on('click', function () {
@@ -123,18 +123,20 @@ $(document).ready(function () {
     // === DATA TABLE INITIALIZATION AND FILTERING ===
 
     function applyFilter(dataTable, filter, value) {
+        const columnIndex = filter.columnIndex;
+
         if (filter.type === 'select') {
             if (value) {
-                dataTable.column(filter.columnIndex)
-                         .search('^' + $.fn.dataTable.util.escapeRegex(value) + '$', true, false)
-                         .draw();
+                dataTable.column(columnIndex)
+                    .search('^' + $.fn.dataTable.util.escapeRegex(value) + '$', true, false)
+                    .draw();
             } else {
-                dataTable.column(filter.columnIndex).search('', true, false).draw();
+                dataTable.column(columnIndex).search('', true, false).draw();
             }
         } else if (filter.type === 'numberExact') {
-            dataTable.column(filter.columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
+            dataTable.column(columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
         } else {
-            dataTable.column(filter.columnIndex).search(value).draw();
+            dataTable.column(columnIndex).search(value).draw();
         }
     }
 
@@ -285,12 +287,13 @@ $(document).ready(function () {
             }},
             { title: 'Legendary', filterType: null },
             { title: 'Mythical', filterType: null },
-            { title: 'Ultra Beast', filterType: null }
+            { title: 'Ultra Beast', filterType: null },
+            { title: 'Category', filterType: null } // New hidden column if needed
         ],
         columnDefs: [
-            { targets: "_all", width: "100px" },  // Default width for all columns
+            { targets: "_all", width: "100px" },
             { targets: [6, 7, 9], orderable: false },
-            { targets: [11, 12, 13], orderable: false, visible: false, searchable: true }
+            { targets: [11, 12, 13], visible: false, searchable: true }
         ],
         extraFilters: [
             { selector: '#searchName', columnIndex: 2, type: 'text' },
@@ -298,8 +301,37 @@ $(document).ready(function () {
             { selector: '#filterLegendary', columnIndex: 11, type: 'select' },
             { selector: '#filterMythical', columnIndex: 12, type: 'select' },
             { selector: '#filterUltraBeast', columnIndex: 13, type: 'select' }
-        ]
+        ]    
     });
+
+    // === CUSTOM SEARCH FUNCTION TO HANDLE HIDDEN COLUMNS ===
+
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        const legendaryFilter = $('#filterLegendary').val();
+        const mythicalFilter = $('#filterMythical').val();
+        const ultraBeastFilter = $('#filterUltraBeast').val();
+    
+        const legendaryValue = data[11]; // Hidden Legendary column
+        const mythicalValue = data[12];  // Hidden Mythical column
+        const ultraBeastValue = data[13]; // Hidden Ultra Beast column
+    
+        // Check Legendary filter
+        if (legendaryFilter && legendaryFilter !== legendaryValue) {
+            return false;
+        }
+    
+        // Check Mythical filter
+        if (mythicalFilter && mythicalFilter !== mythicalValue) {
+            return false;
+        }
+    
+        // Check Ultra Beast filter
+        if (ultraBeastFilter && ultraBeastFilter !== ultraBeastValue) {
+            return false;
+        }
+    
+        return true;
+    });    
 
     // === PREVENT SORTING ON HEADER CHECKBOXES ===
 
@@ -312,19 +344,17 @@ $(document).ready(function () {
 
     // Function to update checkboxes in a column
     function updateColumnCheckboxes(columnIndex, isChecked) {
-        var table = window.pokemonTable;
-
-        table.rows({ page: 'current' }).every(function (rowIdx, tableLoop, rowLoop) {
-            var data = this.data();
-            var $row = $(this.node());
-
-            var $checkboxCell = $row.find('td').eq(columnIndex);
-            var $checkbox = $checkboxCell.find('input[type="checkbox"]');
-            
+        const table = window.pokemonTable;
+    
+        table.rows({ page: 'current' }).every(function () {
+            const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
+            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
+    
             if ($checkbox.length) {
                 $checkbox.prop('checked', isChecked);
-                $checkboxCell.attr('data-filter', isChecked ? 'Yes' : 'No');
-                hasChanges = true; // Track changes for "Select All"
+                $checkbox.attr('data-changed', 'true'); // Ensure the attribute is set
+                markChanged(); // Track change for "Select All"
+                console.log("Select All toggled, checkbox updated:", $checkbox); // Debug log
             }
         });
     }

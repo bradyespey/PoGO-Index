@@ -8,7 +8,7 @@ import time
 # Add the project root directory to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# Now, you can import app and models after sys.path is correctly set
+# Import app and models after sys.path is correctly set
 from app import app, db
 from models import ShinyPokemon
 
@@ -32,7 +32,7 @@ def fetch_shiny_pokemon_data(app_context):
         count_inserted, count_updated, count_skipped = 0, 0, 0
 
         # Process each Shiny Pokémon
-        for idx, row in enumerate(rows):
+        for row in rows:
             cols = row.find_all("td", recursive=False)
 
             if len(cols) < 5:
@@ -42,11 +42,8 @@ def fetch_shiny_pokemon_data(app_context):
             name = cols[2].get_text(strip=True)
             method = cols[4].get_text(strip=True)
 
-            # Default user_id (replace this with actual user logic)
-            user_id = 1  # Assign the appropriate user_id
-
             # Check if the Shiny entry already exists
-            shiny_pokemon = ShinyPokemon.query.filter_by(dex_number=dex_number, name=name, user_id=user_id).first()
+            shiny_pokemon = ShinyPokemon.query.filter_by(dex_number=dex_number, name=name).first()
 
             if shiny_pokemon:
                 if shiny_pokemon.method != method:
@@ -57,22 +54,18 @@ def fetch_shiny_pokemon_data(app_context):
                     count_skipped += 1
             else:
                 # Insert new Shiny Pokémon
-                new_shiny = ShinyPokemon(dex_number=dex_number, name=name, method=method, user_id=user_id)
+                print(f"Inserting new shiny Pokémon {name} with dex number {dex_number}")
+                new_shiny = ShinyPokemon(dex_number=dex_number, name=name, method=method)
                 db.session.add(new_shiny)
                 db.session.commit()
                 count_inserted += 1
 
-            # Log progress every 10 Pokémon
-            if idx % 10 == 0:
-                print(f"Processing Shiny Pokémon {idx + 1}/{total_shinies}...")
-
         # Final output
-        print(f"Finished processing {total_shinies} Shiny Pokémon.")
+        print(f"Finished processing {total_shinies} Shiny Pokémon")
         print(f"Total Shiny Pokémon added: {count_inserted}")
         print(f"Total Shiny Pokémon updated: {count_updated}")
         print(f"Total Shiny Pokémon skipped: {count_skipped}")
 
 if __name__ == "__main__":
-    from app import app
     with app.app_context():
         fetch_shiny_pokemon_data(app.app_context())

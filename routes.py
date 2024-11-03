@@ -4,7 +4,7 @@ from flask import (
 from functools import wraps
 from models import (
     db, Pokemon, Note, SpecialsPokemon, PokeGenieEntry,
-    ShinyPokemon, Rocket, Costume, Form, User
+    ShinyPokemon, Rocket, Costume, Form, User, AllPokemon
 )
 
 # Authentication decorator
@@ -80,6 +80,10 @@ def init_routes(app, google):
         if matt:
             matt_owned_ids = {op.pokemon_id for op in matt.owned_pokemon}
 
+        # Create a mapping from dex_number to category from AllPokemon table
+        all_pokemon_entries = AllPokemon.query.all()
+        dex_to_category = {entry.dex_number: entry.category for entry in all_pokemon_entries}
+
         for pokemon in pokemon_list:
             # Use the existing user-specific dex fields from the updated model
             brady_living_dex = 'Yes' if pokemon.user_1_living_dex else 'No'
@@ -91,15 +95,16 @@ def init_routes(app, google):
             matt_have = 'Yes' if pokemon.user_2_living_dex else 'No'
             matt_lucky = 'Yes' if pokemon.user_2_lucky else 'No'
 
-            # Specials Logic (Legendary, Mythical, Ultra Beast)
-            specials_entry = SpecialsPokemon.query.filter_by(dex_number=str(pokemon.id)).first()
+            # Fetch category from AllPokemon
+            category = dex_to_category.get(pokemon.dex_number)
             legendary, mythical, ultra_beast = 'No', 'No', 'No'
-            if specials_entry:
-                if specials_entry.type == 'Legendary':
+            if category:
+                categories_list = [cat.strip() for cat in category.split(',')]
+                if 'Legendary' in categories_list:
                     legendary = 'Yes'
-                elif specials_entry.type == 'Mythical':
+                if 'Mythical' in categories_list:
                     mythical = 'Yes'
-                elif specials_entry.type == 'Ultra Beast':
+                if 'Ultra Beast' in categories_list:
                     ultra_beast = 'Yes'
 
             # Note Text
@@ -109,6 +114,7 @@ def init_routes(app, google):
             # Append extended data
             extended_pokemon_list.append({
                 'id': pokemon.id,
+                'dex_number': pokemon.dex_number,  # Include dex_number if needed
                 'name': pokemon.name,
                 'type': pokemon.type,
                 'image_url': pokemon.image_url,
@@ -244,6 +250,12 @@ def init_routes(app, google):
 
         print("Updated Rocket Data: ", updated_rocket_data)
         return render_template('rocket.html', rocket_data=updated_rocket_data)
+    
+    # All Pokémon page route
+    @app.route('/pogo/all-pokemon')
+    def all_pokemon():
+        all_pokemon_data = AllPokemon.query.all()
+        return render_template('all_pokemon.html', all_pokemon_data=all_pokemon_data)
 
     # Notes page route
     @app.route('/pogo/notes')
@@ -353,6 +365,15 @@ def init_routes(app, google):
         with app.app_context():
             fetch_rocket_pokemon_data()
         return redirect(url_for('rocket'))
+    
+    # Update All Pokémon data route
+    @app.route('/pogo/update-all-pokemon', methods=['POST'])
+    @requires_auth  # Ensure only authorized users can update
+    def update_all_pokemon():
+        from scripts.update_all_pokemon import fetch_all_pokemon_data
+        with app.app_context():
+            fetch_all_pokemon_data()
+        return redirect(url_for('all_pokemon'))
 
     # Update Notes route
     @app.route('/pogo/update-notes', methods=['POST'])

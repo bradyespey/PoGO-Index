@@ -8,7 +8,7 @@ import time
 # Add the project root directory to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# Now, you can import app and models after sys.path is correctly set
+# Import app and models after sys.path is correctly set
 from app import app, db
 from models import Costume
 
@@ -46,10 +46,10 @@ def extract_costume_data(html):
                 name = decode_html(columns[0].get_text(strip=True))
                 first_appearance = decode_html(columns[1].get_text(strip=True))
 
-                # Using placeholder dex_number since Eurogamer page doesn’t seem to have dex numbers
+                # Placeholder dex_number, as the source page may not have it directly
                 dex_number = None  # You'll need a lookup mechanism to map name -> dex number
 
-                # Match the name with the costume if possible
+                # Determine costume type based on keywords
                 costume_type = "Unknown"
                 if 'costume' in name.lower():
                     costume_type = 'Costume'
@@ -80,11 +80,8 @@ def fetch_costume_data(app_context):
         count_inserted, count_updated, count_skipped = 0, 0, 0
 
         for idx, (dex_number, name, costume, first_appearance) in enumerate(costumes_data):
-            # Default user_id (you can replace this with actual user logic)
-            user_id = 1  # Assign the appropriate user_id based on your requirements
-
             # Check if the costume entry already exists in the database
-            existing_costume = Costume.query.filter_by(name=name, user_id=user_id).first()
+            existing_costume = Costume.query.filter_by(name=name).first()
 
             if existing_costume:
                 # Update the existing costume entry if data has changed
@@ -97,17 +94,14 @@ def fetch_costume_data(app_context):
                     count_skipped += 1
             else:
                 # Insert a new costume entry
-                new_costume = Costume(dex_number=dex_number, name=name, costume=costume, first_appearance=first_appearance, user_id=user_id)
+                print(f"Inserting new costume Pokémon {name} with dex number {dex_number}")
+                new_costume = Costume(dex_number=dex_number, name=name, costume=costume, first_appearance=first_appearance)
                 db.session.add(new_costume)
                 db.session.commit()
                 count_inserted += 1
 
-            # Log progress every 10 entries
-            if idx % 10 == 0:
-                print(f"Processing Costume {idx + 1}/{len(costumes_data)}...")
-
-        # Output the results
-        print(f"Finished processing {len(costumes_data)} Costume Pokémon.")
+        # Final output summary
+        print(f"Finished processing {len(costumes_data)} Costume Pokémon")
         print(f"Total Costumes added: {count_inserted}")
         print(f"Total Costumes updated: {count_updated}")
         print(f"Total Costumes skipped: {count_skipped}")
