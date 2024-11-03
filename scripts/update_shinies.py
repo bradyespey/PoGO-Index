@@ -39,13 +39,25 @@ def fetch_shiny_pokemon_data(app_context):
                 continue
 
             dex_number = int(cols[0].get_text(strip=True).replace('#', ''))
-            name = cols[2].get_text(strip=True)
+            full_name = cols[2].get_text(strip=True)
             method = cols[4].get_text(strip=True)
 
-            # Check if the Shiny entry already exists
-            shiny_pokemon = ShinyPokemon.query.filter_by(dex_number=dex_number, name=name).first()
+            # Extract name and form
+            if '(' in full_name and ')' in full_name:
+                # Separate out the name and form
+                name, form = full_name.split('(', 1)
+                name = name.strip()  # Remove any trailing spaces
+                form = form.strip(')').strip()  # Remove the closing parenthesis and extra spaces
+            else:
+                # No form specified
+                name = full_name.strip()
+                form = None
+
+            # Check if the Shiny entry already exists based on dex_number, name, and form
+            shiny_pokemon = ShinyPokemon.query.filter_by(dex_number=dex_number, name=name, form=form).first()
 
             if shiny_pokemon:
+                # Update existing Shiny Pokémon entry if the method has changed
                 if shiny_pokemon.method != method:
                     shiny_pokemon.method = method
                     db.session.commit()
@@ -53,9 +65,18 @@ def fetch_shiny_pokemon_data(app_context):
                 else:
                     count_skipped += 1
             else:
-                # Insert new Shiny Pokémon
-                print(f"Inserting new shiny Pokémon {name} with dex number {dex_number}")
-                new_shiny = ShinyPokemon(dex_number=dex_number, name=name, method=method)
+                # Insert new Shiny Pokémon entry
+                print(f"Inserting new shiny Pokémon {name} (form: {form}) with dex number {dex_number}")
+                new_shiny = ShinyPokemon(
+                    dex_number=dex_number,
+                    name=name,
+                    form=form,
+                    method=method,
+                    brady_own=False,
+                    brady_lucky=False,
+                    matt_own=False,
+                    matt_lucky=False
+                )
                 db.session.add(new_shiny)
                 db.session.commit()
                 count_inserted += 1

@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import UniqueConstraint
 
 db = SQLAlchemy()
 
@@ -16,6 +17,7 @@ class User(db.Model):
     def __repr__(self):
         return f"<User {self.name}>"
 
+# Pokémon Model
 class Pokemon(db.Model):
     __tablename__ = 'pokemon'
     id = db.Column(db.Integer, primary_key=True)
@@ -112,12 +114,23 @@ class PokeGenieEntry(db.Model):
 class ShinyPokemon(db.Model):
     __tablename__ = 'shinies'
     id = db.Column(db.Integer, primary_key=True)
-    dex_number = db.Column(db.Integer)
-    name = db.Column(db.String(100))
+    dex_number = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    form = db.Column(db.String(100), nullable=True)  # New column for the form
     method = db.Column(db.String(255))
 
+    # Ownership tracking fields for Brady and Matt
+    brady_own = db.Column(db.Boolean, default=False)
+    brady_lucky = db.Column(db.Boolean, default=False)
+    matt_own = db.Column(db.Boolean, default=False)
+    matt_lucky = db.Column(db.Boolean, default=False)
+
+    __table_args__ = (
+        UniqueConstraint('dex_number', 'name', 'form', name='_dex_name_form_uc'),
+    )
+
     def __repr__(self):
-        return f"<ShinyPokemon {self.dex_number} - {self.name}>"
+        return f"<ShinyPokemon {self.dex_number} - {self.name} ({self.form})>"
 
 # Specials Pokémon Model
 class SpecialsPokemon(db.Model):

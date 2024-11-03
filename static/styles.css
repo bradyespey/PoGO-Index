@@ -313,28 +313,39 @@ body.loaded #preloader { display: none; }
 }
 
 /* === Responsive Tables === */
-
-   .table-responsive {
-    overflow-x: auto;
+.table-responsive {
+    overflow-x: auto; /* Ensure horizontal scrolling is available for large tables */
 }
 
-/* Optional: make sure the table takes the full width within the responsive container */
-.table-responsive .display.nowrap {
-    width: 100%;
-}
-
-/* === Set Columns to Auto-Width === */
-/* Force all columns to a narrower default width and prevent wrapping */
+/* === Pokémon Table Specific Styles === */
 #pokemonTable th,
 #pokemonTable td {
-    width: 100px;         /* Default column width */
-    white-space: nowrap;  /* Prevent text wrapping */
-    text-align: center;   /* Center-align content for consistency */
+    width: auto;              /* Allow columns to auto-adjust their width */
+    white-space: nowrap;      /* Prevent text from wrapping */
+    text-align: center;       /* Center-align content for consistency */
 }
 
-/* Make input fields narrower */
 #pokemonTable thead input {
-    width: 80% !important;
+    width: 80% !important;    /* Make input fields narrower */
     padding: 4px;
     font-size: 12px;
+}
+
+/* === Shinies Table Specific Styles === */
+#shiniesTable th,
+#shiniesTable td {
+    width: auto;              /* Allow columns to auto-adjust their width */
+    white-space: nowrap;      /* Prevent text wrapping */
+    text-align: center;       /* Center-align content for consistency */
+}
+
+#shiniesTable thead input {
+    width: 80% !important;    /* Make input fields narrower */
+    padding: 4px;
+    font-size: 12px;
+}
+
+/* Optional: Make sure the table takes full width within the responsive container */
+.table-responsive .display.nowrap {
+    width: 100%; /* Take full width of the container */
 }

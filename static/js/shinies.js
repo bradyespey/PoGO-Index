@@ -1,21 +1,98 @@
 $(document).ready(function () {
+    let hasChanges = false; // Track if changes were made
+
+    // Centralized function to mark changes
+    function markChanged() {
+        hasChanges = true;
+    }
+
+    // Reset the change tracker after successful save
+    function resetChanges() {
+        hasChanges = false;
+        $('.note-edit, .brady-own-checkbox, .brady-lucky-checkbox, .matt-own-checkbox, .matt-lucky-checkbox').removeAttr('data-changed');
+    }
+
+    // Attach change event listeners to all checkboxes
+    $(document).on('change', '.brady-own-checkbox, .brady-lucky-checkbox, .matt-own-checkbox, .matt-lucky-checkbox', function() {
+        markChanged();
+        $(this).attr('data-changed', 'true'); // Mark as changed
+    });
+
+    // Ensure the click event handler for "Save Changes" button is only attached once
+    $('#saveAllChangesButton').off('click').on('click', function () {
+        if (!hasChanges) {
+            alert("No changes to save!");
+            return;
+        }
+    
+        const changes = collectChanges();
+        console.log("Changes being sent to backend:", changes);
+    
+        $.ajax({
+            url: '/pogo/save-all-changes',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(changes),
+            success: function () {
+                alert('Changes saved successfully!');
+                hasChanges = false; // Reset change tracker
+    
+                // Reset `data-changed` attribute on all checkboxes and note edits after save
+                $('.brady-own-checkbox, .brady-lucky-checkbox, .matt-own-checkbox, .matt-lucky-checkbox').removeAttr('data-changed');
+                console.log("Changes saved, hasChanges reset to:", hasChanges); // Debug log
+            },
+            error: function () {
+                alert('Failed to save changes. Please try again.');
+            }
+        });
+    });    
+
+    // Collect changes from checkboxes to send to the backend
+    function collectChanges() {
+        const checkboxesData = [];
+
+        // Collect checkbox changes marked with data-changed attribute
+        $('.brady-own-checkbox[data-changed], .brady-lucky-checkbox[data-changed], .matt-own-checkbox[data-changed], .matt-lucky-checkbox[data-changed]').each(function () {
+            const shinyId = $(this).data('shiny-id');
+            let checkboxType;
+
+            if ($(this).hasClass('brady-own-checkbox')) checkboxType = 'shiny_brady_own';
+            else if ($(this).hasClass('brady-lucky-checkbox')) checkboxType = 'shiny_brady_lucky';
+            else if ($(this).hasClass('matt-own-checkbox')) checkboxType = 'shiny_matt_own';
+            else if ($(this).hasClass('matt-lucky-checkbox')) checkboxType = 'shiny_matt_lucky';
+
+            const checkedValue = $(this).is(':checked') ? 'Yes' : 'No';
+            if (shinyId !== undefined && checkboxType !== undefined) {
+                checkboxesData.push({
+                    shiny_id: shinyId,
+                    type: checkboxType,
+                    value: checkedValue
+                });
+            }
+        });
+
+        return { checkboxes: checkboxesData };
+    }
+
     // === DATA TABLE INITIALIZATION AND FILTERING ===
 
-    // Function to apply filters from extra filters
+    // Apply filters from extra filters
     function applyFilter(dataTable, filter, value) {
+        const columnIndex = filter.columnIndex;
+
         if (filter.type === 'select') {
             if (value) {
-                dataTable
-                    .column(filter.columnIndex)
-                    .search('^' + $.fn.dataTable.util.escapeRegex(value) + '$', true, false)
+                // Ensure case matches and spaces are trimmed
+                dataTable.column(columnIndex)
+                    .search('^' + $.fn.dataTable.util.escapeRegex(value.trim()) + '$', true, false)
                     .draw();
             } else {
-                dataTable.column(filter.columnIndex).search('', true, false).draw();
+                dataTable.column(columnIndex).search('', true, false).draw();
             }
         } else if (filter.type === 'numberExact') {
-            dataTable.column(filter.columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
+            dataTable.column(columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
         } else {
-            dataTable.column(filter.columnIndex).search(value).draw();
+            dataTable.column(columnIndex).search(value).draw();
         }
     }
 
@@ -126,44 +203,75 @@ $(document).ready(function () {
         lengthChange: false,
         showEntriesSelector: '#showEntries',
         columns: [
-            { title: '#', filterType: 'numberExact' },    // Index 0
-            { title: 'Name', filterType: 'text' },        // Index 1
-            { title: 'Method', filterType: 'text' },      // Index 2
+            { title: '#', filterType: 'numberExact' },  // Index 0
+            { title: 'Name', filterType: 'text' },      // Index 1
+            { title: 'Form', filterType: 'text' },      // Index 2
+            { title: 'Method', filterType: 'text' },    // Index 3
+            { title: 'Brady 👤', filterType: 'select', options: ['Yes', 'No'] }, // Index 4
+            { title: 'Brady 🎲', filterType: 'select', options: ['Yes', 'No'] }, // Index 5
+            { title: 'Matt 👤', filterType: 'select', options: ['Yes', 'No'] },  // Index 6
+            { title: 'Matt 🎲', filterType: 'select', options: ['Yes', 'No'] },  // Index 7
         ],
         extraFilters: [
             { selector: '#searchName', columnIndex: 1, type: 'text' },
-            { selector: '#searchMethod', columnIndex: 2, type: 'text' },
+            { selector: '#searchMethod', columnIndex: 3, type: 'text' },
         ],
     });
 
     // === RESET FILTERS ===
-
     $('#resetFiltersButton').on('click', function () {
-        if (window.shiniesTable) {
-            // Clear DataTables filters
-            window.shiniesTable.search('').columns().search('').draw();
+        if (window.pokemonTable || window.shiniesTable) {
+            const activeTable = window.pokemonTable ? window.pokemonTable : window.shiniesTable;
 
-            // Reset cloned header inputs and selects
-            const clonedHeader = window.shiniesTable.table().header();
-            $(clonedHeader).find('input, select').val('');
+            // Clear all column filters and search fields in DataTable
+            activeTable.search('').columns().search('').draw();
 
-            // Reset additional filter elements outside the table
-            [
-                '#searchName',
-                '#searchMethod',
-            ].forEach(selector => {
-                $(selector).val('');
+            // Reset internal filters in the header of the table
+            const clonedHeader = activeTable.table().header();
+            $(clonedHeader).find('input, select').each(function () {
+                $(this).val(''); // Clear the value
             });
 
-            // Reset entries per page to default
-            $('#showEntries').val('10');
-            window.shiniesTable.page.len(10).draw();
+            // Reset custom filters outside of the DataTable (search fields for Name, Method, etc.)
+            $('#searchName, #searchMethod').val('').trigger('change'); // Specific IDs for your external filters
+
+            // Reset entries to the default value of 10
+            $('#showEntries').val('10').trigger('change');
+            activeTable.page.len(10).draw();
+
+            // Reset sorting to the default sorting (first column ascending)
+            activeTable.order([0, 'asc']).draw();
         }
     });
 
-    // Handle changes in the show entries selector
-    $('#showEntries').on('change', function () {
-        const entries = $(this).val();
-        window.shiniesTable.page.len(entries).draw();
+    // === SELECT ALL / DESELECT ALL ===
+
+    function updateColumnCheckboxes(columnClass, isChecked) {
+        $(`.${columnClass}`).each(function () {
+            $(this).prop('checked', isChecked);
+            $(this).attr('data-changed', 'true');
+            markChanged();
+        });
+    }
+
+    $('#selectAllBradyOwn').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes('brady-own-checkbox', isChecked);
+    });
+
+    $('#selectAllBradyLucky').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes('brady-lucky-checkbox', isChecked);
+    });
+
+    $('#selectAllMattOwn').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes('matt-own-checkbox', isChecked);
+    });
+
+    $('#selectAllMattLucky').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes('matt-lucky-checkbox', isChecked);
     });
 });
+

@@ -137,7 +137,11 @@ def init_routes(app, google):
     def save_all_changes():
         data = request.get_json()
 
-        # Process notes
+        # Ensure data is received correctly
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
+        # === Process Notes Data ===
         notes = data.get('notes', [])
         for note in notes:
             pokemon_id = note.get('pokemon_id')
@@ -145,35 +149,54 @@ def init_routes(app, google):
             if pokemon_id:
                 existing_note = Note.query.filter_by(pokemon_id=pokemon_id).first()
                 if existing_note:
-                    existing_note.note_text = note_text
+                    existing_note.note_text = note_text  # Update the existing note
                 else:
                     new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
-                    db.session.add(new_note)
+                    db.session.add(new_note)  # Add a new note if none exists
 
-        # Iterate over checkboxes data
+        # === Process Checkbox Data for Pokémon and Shiny Pokémon ===
         for checkbox in data.get('checkboxes', []):
-            pokemon_id = checkbox['pokemon_id']
-            checkbox_type = checkbox['type']
-            checked_value = checkbox['value'] == 'Yes'  # Convert to boolean
+            entity_id = checkbox.get('shiny_id') or checkbox.get('pokemon_id')  # Adjusted key usage here
+            checkbox_type = checkbox.get('type')
+            checked_value = checkbox.get('value') == 'Yes'
 
-            # Fetch the correct Pokemon entry
-            pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
-            if pokemon:
-                if checkbox_type == 'matt_lucky':
-                    pokemon.user_2_lucky = checked_value  # Update Matt's lucky dex field
-                elif checkbox_type == 'matt_have':
-                    pokemon.user_2_living_dex = checked_value
-                elif checkbox_type == 'ipad_lucky':
-                    pokemon.user_0_lucky = checked_value
-                
-                # Save the change to the database
-                db.session.add(pokemon)
+            # Process checkboxes for Shiny Pokémon if type starts with "shiny_"
+            if checkbox_type.startswith('shiny_'):
+                shiny_pokemon = ShinyPokemon.query.filter_by(id=entity_id).first()
+                if shiny_pokemon:
+                    if checkbox_type == 'shiny_brady_own':
+                        shiny_pokemon.brady_own = checked_value
+                    elif checkbox_type == 'shiny_brady_lucky':
+                        shiny_pokemon.brady_lucky = checked_value
+                    elif checkbox_type == 'shiny_matt_own':
+                        shiny_pokemon.matt_own = checked_value
+                    elif checkbox_type == 'shiny_matt_lucky':
+                        shiny_pokemon.matt_lucky = checked_value
 
+                    # Save the change to the database
+                    db.session.add(shiny_pokemon)
+
+            # Process checkboxes for normal Pokémon
+            else:
+                pokemon = Pokemon.query.filter_by(id=entity_id).first()
+                if pokemon:
+                    if checkbox_type == 'matt_lucky':
+                        pokemon.user_2_lucky = checked_value
+                    elif checkbox_type == 'matt_have':
+                        pokemon.user_2_living_dex = checked_value
+                    elif checkbox_type == 'ipad_lucky':
+                        pokemon.user_0_lucky = checked_value
+
+                    # Save the change to the database
+                    db.session.add(pokemon)
+
+        # === Commit All Changes to the Database ===
         try:
             db.session.commit()
             return jsonify({'message': 'Changes saved successfully'}), 200
         except Exception as e:
             db.session.rollback()
+            print("Database commit failed:", e)
             return jsonify({'error': str(e)}), 500
 
     # Poke Genie page route
@@ -186,7 +209,23 @@ def init_routes(app, google):
     @app.route('/pogo/shinies')
     def shinies():
         shinies_data = ShinyPokemon.query.all()
-        return render_template('shinies.html', shinies_data=shinies_data)
+        extended_shinies_list = []
+
+        for shiny in shinies_data:
+            # Create a dictionary with all the details for each shiny Pokémon
+            extended_shinies_list.append({
+                'id': shiny.id,
+                'dex_number': shiny.dex_number,
+                'name': shiny.name,
+                'form': shiny.form if shiny.form else 'Normal',  # Default to 'Normal' if no form specified
+                'method': shiny.method,
+                'brady_own': 'Yes' if shiny.brady_own else 'No',
+                'brady_lucky': 'Yes' if shiny.brady_lucky else 'No',
+                'matt_own': 'Yes' if shiny.matt_own else 'No',
+                'matt_lucky': 'Yes' if shiny.matt_lucky else 'No'
+            })
+
+        return render_template('shinies.html', shinies_list=extended_shinies_list)
 
     # Specials page route
     @app.route('/pogo/specials')

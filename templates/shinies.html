@@ -10,52 +10,111 @@
         <a href="https://www.serebii.net/pokemongo/shiny.shtml" target="_blank">Serebii.net</a>.
     </p>
 
-    <!-- Combined filter row with "Show entries" and "Reset All" button in one row -->
+    <!-- Combined Filters and Buttons Row -->
     <div class="row mb-3 align-items-center">
-        <!-- Name Search -->
-        <div class="col-md-3">
-            <label for="searchName">Name:</label>
+        <!-- Name Filter -->
+        <div class="col-md-3 col-sm-6 mb-2">
+            <label for="searchName" class="form-label">Name:</label>
             <input type="text" id="searchName" class="form-control" placeholder="Search Name">
         </div>
 
-        <!-- Method Search -->
-        <div class="col-md-3">
-            <label for="searchMethod">Method:</label>
+        <!-- Method Filter -->
+        <div class="col-md-3 col-sm-6 mb-2">
+            <label for="searchMethod" class="form-label">Method:</label>
             <input type="text" id="searchMethod" class="form-control" placeholder="Search Method">
         </div>
 
-        <!-- Show entries selector and Reset All button -->
-        <div class="col-md-4 d-flex align-items-end">
-            <div class="input-group">
-                <label for="showEntries" class="mr-2">Show entries:</label>
-                <select id="showEntries" class="form-control">
-                    <option value="10" selected>10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="-1">-All-</option>
-                </select>
-                <button id="resetFiltersButton" class="btn btn-warning ml-2">Reset All</button>
-            </div>
+        <!-- Show entries selector -->
+        <div class="col-md-2 col-sm-6 mb-2">
+            <label for="showEntries" class="form-label">Show entries:</label>
+            <select id="showEntries" class="form-control">
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="-1">-All-</option>
+            </select>
+        </div>
+
+        <!-- Save Changes and Reset All Buttons -->
+        <div class="col-md-4 d-flex justify-content-end">
+            {% if 'user' in session %}
+            <button id="saveAllChangesButton" class="btn btn-success btn-lg me-2">Save Changes</button>
+            {% endif %}
+            <button id="resetFiltersButton" class="btn btn-warning btn-lg">Reset All</button>
         </div>
     </div>
 
-    <!-- Table for Shiny Pokémon -->
+    <!-- Table for Shiny Pokémon List -->
     <div class="table-responsive">
         <table id="shiniesTable" class="table table-striped table-bordered">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Name</th>
+                    <th>Form</th>
                     <th>Method</th>
+                    <th>
+                        <div>Brady 👤<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllBradyOwn">
+                    </th>
+                    <th>
+                        <div>Brady 🎲<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllBradyLucky">
+                    </th>
+                    <th>
+                        <div>Matt 👤<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMattOwn">
+                    </th>
+                    <th>
+                        <div>Matt 🎲<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMattLucky">
+                    </th>
                 </tr>
-            </thead>
+            </thead>            
             <tbody>
-                {% for shiny in shinies_data %}
+                {% for shiny in shinies_list %}
                 <tr>
                     <td>{{ shiny.dex_number }}</td>
                     <td>{{ shiny.name }}</td>
+                    <td>{{ shiny.form }}</td>
                     <td>{{ shiny.method }}</td>
+
+                    <!-- Brady Own Checkbox -->
+                    <td data-filter="{{ 'Yes' if shiny.brady_own == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="brady-own-checkbox" data-shiny-id="{{ shiny.id }}" {% if shiny.brady_own == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ shiny.brady_own }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Brady Lucky Checkbox -->
+                    <td data-filter="{{ 'Yes' if shiny.brady_lucky == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="brady-lucky-checkbox" data-shiny-id="{{ shiny.id }}" {% if shiny.brady_lucky == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ shiny.brady_lucky }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Matt Own Checkbox -->
+                    <td data-filter="{{ 'Yes' if shiny.matt_own == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-own-checkbox" data-shiny-id="{{ shiny.id }}" {% if shiny.matt_own == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ shiny.matt_own }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Matt Lucky Checkbox -->
+                    <td data-filter="{{ 'Yes' if shiny.matt_lucky == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-lucky-checkbox" data-shiny-id="{{ shiny.id }}" {% if shiny.matt_lucky == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ shiny.matt_lucky }}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
