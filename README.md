@@ -70,7 +70,7 @@ This project demonstrates advanced functionalities such as:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/pokemon-go-dex-tracker.git
+   git clone https://github.com/bradyspey/pokemon-go-dex-tracker.git
    cd pokemon-go-dex-tracker
    ```
 
@@ -144,17 +144,17 @@ python scripts/update_pokemon.py
 
 ## Screenshots
 
-### Pokémon List View
+### Pokémon GO Index Overview
 
-![Pokémon List](screenshots/pokemon_list.png)
+![Pokémon List](screenshots/pokemon_info.png)
 
-*An interactive table displaying all Pokémon with ownership status and filtering options.*
+*Detailed counts and numbers of all types of Pokémon and a description of all pages.*
 
 ### Pokémon Detail View
 
-![Pokémon Detail](screenshots/pokemon_detail.png)
+![Pokémon GO Page](screenshots/pokemon_page.png)
 
-*Detailed view of a specific Pokémon with options to update ownership and add notes.*
+*An interactive table displaying all Pokémon with ownership status, filtering options, and options to update ownership and add notes .*
 
 ---
 
@@ -210,7 +210,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For any inquiries or feedback, please contact:
 
-**Your Name**
+**Brady Espey**
 
 - **Email**: bradyespey@gmail.com
 - **LinkedIn**: [Brady Espey](https://www.linkedin.com/in/bradyespey/)
