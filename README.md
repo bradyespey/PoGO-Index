@@ -146,13 +146,13 @@ python scripts/update_pokemon.py
 
 ### Pokémon GO Index Overview
 
-![Pokémon List](screenshots/pokemon_info.png)
+![Pokémon List](pokemon_info.png)
 
 *Detailed counts and numbers of all types of Pokémon and a description of all pages.*
 
 ### Pokémon Detail View
 
-![Pokémon GO Page](screenshots/pokemon_page.png)
+![Pokémon GO Page](pokemon_page.png)
 
 *An interactive table displaying all Pokémon with ownership status, filtering options, and options to update ownership and add notes .*
 
