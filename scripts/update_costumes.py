@@ -12,101 +12,131 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from app import app, db
 from models import Costume
 
-# Helper functions to clean and process HTML data
-def decode_html(html):
-    """Helper function to decode HTML entities like &eacute;."""
-    return (html.replace('&amp;', '&')
-                .replace('&lt;', '<')
-                .replace('&gt;', '>')
-                .replace('&quot;', '"')
-                .replace('&#39;', "'")
-                .replace('&eacute;', 'é')
-                .replace('&uacute;', 'ú')
-                .replace('&Eacute;', 'É')
-                .replace('&Uacute;', 'Ú'))
+# URL for event Pokémon costume data
+URL = "https://pokemongo.fandom.com/wiki/Event_Pok%C3%A9mon#Regular"
 
-def extract_costume_data(html):
-    """Parse the HTML and extract costume Pokémon data."""
-    soup = BeautifulSoup(html, 'html.parser')  # Convert HTML content to a BeautifulSoup object
+def parse_event_pokemon(html):
+    """Parse the HTML and extract event Pokémon costume data."""
+    soup = BeautifulSoup(html, 'html.parser')
+    event_items = soup.find_all("div", class_="pogo-list-item")
+    parsed_data = []
 
-    # Find all tables that might contain costume Pokémon data
-    tables = soup.find_all('table')
+    if not event_items:
+        print("No event Pokémon items found.")
+        return parsed_data
 
-    # Placeholder list for the parsed data (dex_number, name, costume, first appearance)
-    costumes_data = []
+    for item in event_items:
+        # Extract dex number
+        dex_number_tag = item.find("div", class_="pogo-list-item-number")
+        dex_number = int(dex_number_tag.get_text(strip=True).replace("#", "")) if dex_number_tag else None
 
-    # Loop through each table (assuming that costume data is within table rows)
-    for table in tables:
-        rows = table.find_all('tr')
-        for row in rows[1:]:  # Skip the first row (header)
-            columns = row.find_all('td')
+        # Extract Pokémon name
+        name_tag = item.find("div", class_="pogo-list-item-name")
+        name = name_tag.get_text(strip=True) if name_tag else "Unknown"
 
-            # Ensure the row has enough columns to be valid
-            if len(columns) >= 2:
-                name = decode_html(columns[0].get_text(strip=True))
-                first_appearance = decode_html(columns[1].get_text(strip=True))
+        # Extract costume/form
+        form_tag = item.find("div", class_="pogo-list-item-form")
+        costume = form_tag.get_text(strip=True) if form_tag else "Unknown"
 
-                # Placeholder dex_number, as the source page may not have it directly
-                dex_number = None  # You'll need a lookup mechanism to map name -> dex number
+        # Check for shiny status and set shiny_released value
+        shiny = item.find("div", class_="pogo-list-item-image shiny") is not None
+        shiny_released = shiny
 
-                # Determine costume type based on keywords
-                costume_type = "Unknown"
-                if 'costume' in name.lower():
-                    costume_type = 'Costume'
-                elif 'flower crown' in name.lower():
-                    costume_type = 'Flower Crown'
-                elif 'party hat' in name.lower():
-                    costume_type = 'Party Hat'
+        # Extract image URLs with improved handling for nested tags
+        image_url = None
+        shiny_image_url = None
 
-                # Append the parsed data
-                costumes_data.append((dex_number, name, costume_type, first_appearance))
+        # Find the regular image
+        image_r_tag = item.find("div", class_="pogo-list-item-image-r")
+        if image_r_tag:
+            image = image_r_tag.find("img")
+            if image and "src" in image.attrs:
+                image_url = image["src"]
 
-    return costumes_data
+        # Find the shiny image
+        image_s_tag = item.find("div", class_="pogo-list-item-image-s")
+        if image_s_tag:
+            shiny_image = image_s_tag.find("img")
+            if shiny_image and "src" in shiny_image.attrs:
+                shiny_image_url = shiny_image["src"]
+
+        # Debug: Print image URLs to confirm parsing
+        print(f"Parsed {name}: Dex #{dex_number}, Costume: {costume}, Image URL: {image_url}, Shiny Image URL: {shiny_image_url}")
+
+        # Append data for processing
+        parsed_data.append({
+            "dex_number": dex_number,
+            "name": name,
+            "costume": costume,
+            "image_url": image_url,
+            "shiny_released": shiny_released,
+            "shiny_image_url": shiny_image_url
+        })
+
+    return parsed_data
 
 def fetch_costume_data(app_context):
+    """Fetch and update costume Pokémon data in the database."""
     with app_context:
         print("Fetching and updating Costume Pokémon data...")
 
-        url = "https://www.eurogamer.net/pokemon-go-event-costume-pokemon-party-hat-flower-crown-7002"
         start_time = time.time()
-        print(f"Fetching data from {url}...")
-        response = requests.get(url)
-        soup = response.text  # Use response.text, which is the raw HTML content
-        print(f"Fetched data in {time.time() - start_time:.2f} seconds")
+        print(f"Fetching data from {URL}...")
+        response = requests.get(URL)
+        if response.status_code != 200:
+            print(f"Failed to fetch data: {response.status_code}")
+            return
 
-        # Parse the HTML and extract costume Pokémon data
-        costumes_data = extract_costume_data(soup)
-
+        soup = response.text
+        costumes_data = parse_event_pokemon(soup)
         count_inserted, count_updated, count_skipped = 0, 0, 0
 
-        for idx, (dex_number, name, costume, first_appearance) in enumerate(costumes_data):
-            # Check if the costume entry already exists in the database
-            existing_costume = Costume.query.filter_by(name=name).first()
+        for costume_data in costumes_data:
+            # Check if costume entry exists
+            existing_costume = Costume.query.filter_by(
+                dex_number=costume_data["dex_number"],
+                name=costume_data["name"],
+                costume=costume_data["costume"]
+            ).first()
 
             if existing_costume:
-                # Update the existing costume entry if data has changed
-                if existing_costume.costume != costume or existing_costume.first_appearance != first_appearance:
-                    existing_costume.costume = costume
-                    existing_costume.first_appearance = first_appearance
+                # Update fields if needed
+                if (existing_costume.image_url != costume_data["image_url"] or
+                    existing_costume.shiny_released != costume_data["shiny_released"] or
+                    existing_costume.shiny_image_url != costume_data["shiny_image_url"]):
+                    
+                    existing_costume.image_url = costume_data["image_url"]
+                    existing_costume.shiny_released = costume_data["shiny_released"]
+                    existing_costume.shiny_image_url = costume_data["shiny_image_url"]
                     db.session.commit()
                     count_updated += 1
                 else:
                     count_skipped += 1
             else:
-                # Insert a new costume entry
-                print(f"Inserting new costume Pokémon {name} with dex number {dex_number}")
-                new_costume = Costume(dex_number=dex_number, name=name, costume=costume, first_appearance=first_appearance)
+                # Insert new costume entry
+                print(f"Inserting new costume Pokémon {costume_data['name']} with dex number {costume_data['dex_number']}")
+                new_costume = Costume(
+                    dex_number=costume_data["dex_number"],
+                    name=costume_data["name"],
+                    costume=costume_data["costume"],
+                    image_url=costume_data["image_url"],
+                    shiny_released=costume_data["shiny_released"],
+                    shiny_image_url=costume_data["shiny_image_url"],
+                    brady_own=False,
+                    brady_shiny=False,
+                    matt_own=False,
+                    matt_shiny=False
+                )
                 db.session.add(new_costume)
                 db.session.commit()
                 count_inserted += 1
 
-        # Final output summary
-        print(f"Finished processing {len(costumes_data)} Costume Pokémon")
+        print(f"Finished processing Costume Pokémon")
         print(f"Total Costumes added: {count_inserted}")
         print(f"Total Costumes updated: {count_updated}")
         print(f"Total Costumes skipped: {count_skipped}")
+        print(f"Fetched and processed data in {time.time() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
-    from app import app
     with app.app_context():
         fetch_costume_data(app.app_context())

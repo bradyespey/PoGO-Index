@@ -345,6 +345,20 @@ body.loaded #preloader { display: none; }
     font-size: 12px;
 }
 
+/* === Costumes Table Specific Styles === */
+#costumesTable th,
+#costumesTable td {
+    width: auto;              /* Allow columns to auto-adjust their width */
+    white-space: nowrap;      /* Prevent text wrapping */
+    text-align: center;       /* Center-align content for consistency */
+}
+
+#costumesTable thead input {
+    width: 80% !important;    /* Make input fields narrower */
+    padding: 4px;
+    font-size: 12px;
+}
+
 /* Optional: Make sure the table takes full width within the responsive container */
 .table-responsive .display.nowrap {
     width: 100%; /* Take full width of the container */

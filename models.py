@@ -143,19 +143,32 @@ class SpecialsPokemon(db.Model):
     def __repr__(self):
         return f"<SpecialsPokemon {self.dex_number} - {self.name} ({self.type})>"
 
-# Costume Model
+# Costume Pokémon Model
 class Costume(db.Model):
     __tablename__ = 'costumes'
     id = db.Column(db.Integer, primary_key=True)
-    dex_number = db.Column(db.Integer)
-    name = db.Column(db.String(100))
-    costume = db.Column(db.String(100))
-    first_appearance = db.Column(db.String(255))
+    dex_number = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    costume = db.Column(db.String(100), nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)
+    shiny_released = db.Column(db.Boolean, default=False)
+    shiny_image_url = db.Column(db.String(255), nullable=True)
+
+    # Ownership tracking fields for Brady and Matt
+    brady_own = db.Column(db.Boolean, default=False)
+    brady_shiny = db.Column(db.Boolean, default=False)
+    matt_own = db.Column(db.Boolean, default=False)
+    matt_shiny = db.Column(db.Boolean, default=False)
+
+    # Unique Constraint for (dex_number, name, costume) combination
+    __table_args__ = (
+        db.UniqueConstraint('dex_number', 'name', 'costume', name='_dex_name_costume_uc'),
+    )
 
     def __repr__(self):
         return f"<Costume {self.dex_number} - {self.name} ({self.costume})>"
 
-# Form Model
+# Form Pokémon Model
 class Form(db.Model):
     __tablename__ = 'forms'
     id = db.Column(db.Integer, primary_key=True)

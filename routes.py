@@ -149,14 +149,14 @@ def init_routes(app, google):
             if pokemon_id:
                 existing_note = Note.query.filter_by(pokemon_id=pokemon_id).first()
                 if existing_note:
-                    existing_note.note_text = note_text  # Update the existing note
+                    existing_note.note_text = note_text  # Update existing note
                 else:
                     new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
                     db.session.add(new_note)  # Add a new note if none exists
 
-        # === Process Checkbox Data for Pokémon and Shiny Pokémon ===
+        # === Process Checkbox Data for Pokémon, Shiny Pokémon, and Costumes ===
         for checkbox in data.get('checkboxes', []):
-            entity_id = checkbox.get('shiny_id') or checkbox.get('pokemon_id')  # Adjusted key usage here
+            entity_id = checkbox.get('shiny_id') or checkbox.get('pokemon_id') or checkbox.get('costume_id')
             checkbox_type = checkbox.get('type')
             checked_value = checkbox.get('value') == 'Yes'
 
@@ -172,12 +172,10 @@ def init_routes(app, google):
                         shiny_pokemon.matt_own = checked_value
                     elif checkbox_type == 'shiny_matt_lucky':
                         shiny_pokemon.matt_lucky = checked_value
-
-                    # Save the change to the database
                     db.session.add(shiny_pokemon)
 
             # Process checkboxes for normal Pokémon
-            else:
+            elif checkbox_type in ['matt_lucky', 'matt_have', 'ipad_lucky']:
                 pokemon = Pokemon.query.filter_by(id=entity_id).first()
                 if pokemon:
                     if checkbox_type == 'matt_lucky':
@@ -186,9 +184,21 @@ def init_routes(app, google):
                         pokemon.user_2_living_dex = checked_value
                     elif checkbox_type == 'ipad_lucky':
                         pokemon.user_0_lucky = checked_value
-
-                    # Save the change to the database
                     db.session.add(pokemon)
+
+            # Process checkboxes for Costumes if type starts with "costume_"
+            elif checkbox_type.startswith('costume_'):
+                costume = Costume.query.filter_by(id=entity_id).first()
+                if costume:
+                    if checkbox_type == 'costume_brady_own':
+                        costume.brady_own = checked_value
+                    elif checkbox_type == 'costume_brady_shiny':
+                        costume.brady_shiny = checked_value
+                    elif checkbox_type == 'costume_matt_own':
+                        costume.matt_own = checked_value
+                    elif checkbox_type == 'costume_matt_shiny':
+                        costume.matt_shiny = checked_value
+                    db.session.add(costume)
 
         # === Commit All Changes to the Database ===
         try:
@@ -237,7 +247,25 @@ def init_routes(app, google):
     @app.route('/pogo/costumes')
     def costumes():
         costumes_data = Costume.query.all()
-        return render_template('costumes.html', costumes_data=costumes_data)
+        extended_costumes_list = []
+
+        for costume in costumes_data:
+            # Create a dictionary with all the details for each costume Pokémon
+            extended_costumes_list.append({
+                'id': costume.id,
+                'dex_number': costume.dex_number,
+                'name': costume.name,
+                'costume': costume.costume,
+                'image_url': costume.image_url,
+                'shiny_released': 'Yes' if costume.shiny_released else 'No',
+                'shiny_image_url': costume.shiny_image_url,
+                'brady_own': 'Yes' if costume.brady_own else 'No',
+                'matt_own': 'Yes' if costume.matt_own else 'No',
+                'brady_shiny': 'Yes' if costume.brady_shiny else 'No',
+                'matt_shiny': 'Yes' if costume.matt_shiny else 'No'
+            })
+
+        return render_template('costumes.html', costumes_data=extended_costumes_list)
 
     # Forms page route
     @app.route('/pogo/forms')
@@ -395,6 +423,15 @@ def init_routes(app, google):
         with app.app_context():
             fetch_and_update_specials()
         return redirect(url_for('specials'))
+    
+    # Update Costumes data route
+    @app.route('/pogo/update-costumes', methods=['POST'])
+    @requires_auth
+    def update_costumes():
+        from scripts.update_costumes import fetch_costume_pokemon_data  # Import function here
+        with app.app_context():
+            fetch_costume_pokemon_data()
+        return redirect(url_for('costumes'))
 
     # Update Rocket data route
     @app.route('/pogo/update-rocket', methods=['POST'])

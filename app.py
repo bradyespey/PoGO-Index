@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from authlib.integrations.flask_client import OAuth
-from models import db
+from models import db  # Import db here
 from routes import init_routes
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -30,7 +30,7 @@ if env == 'production':
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Initialize the database and migrations
-db.init_app(app)
+db.init_app(app)  # Initialize db with the app here
 migrate = Migrate(app, db)
 
 # OAuth setup with Google
@@ -42,7 +42,7 @@ google = oauth.register(
     access_token_url='https://oauth2.googleapis.com/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    redirect_uri=redirect_uri,  # Explicit redirect_uri
+    redirect_uri=redirect_uri,
     client_kwargs={'scope': 'openid profile email'}
 )
 
