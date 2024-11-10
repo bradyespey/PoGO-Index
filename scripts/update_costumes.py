@@ -75,68 +75,67 @@ def parse_event_pokemon(html):
 
     return parsed_data
 
-def fetch_costume_data(app_context):
+def fetch_costume_data():
     """Fetch and update costume Pokémon data in the database."""
-    with app_context:
-        print("Fetching and updating Costume Pokémon data...")
+    print("Fetching and updating Costume Pokémon data...")
 
-        start_time = time.time()
-        print(f"Fetching data from {URL}...")
-        response = requests.get(URL)
-        if response.status_code != 200:
-            print(f"Failed to fetch data: {response.status_code}")
-            return
+    start_time = time.time()
+    print(f"Fetching data from {URL}...")
+    response = requests.get(URL)
+    if response.status_code != 200:
+        print(f"Failed to fetch data: {response.status_code}")
+        return
 
-        soup = response.text
-        costumes_data = parse_event_pokemon(soup)
-        count_inserted, count_updated, count_skipped = 0, 0, 0
+    soup = response.text
+    costumes_data = parse_event_pokemon(soup)
+    count_inserted, count_updated, count_skipped = 0, 0, 0
 
-        for costume_data in costumes_data:
-            # Check if costume entry exists
-            existing_costume = Costume.query.filter_by(
+    for costume_data in costumes_data:
+        # Check if costume entry exists
+        existing_costume = Costume.query.filter_by(
+            dex_number=costume_data["dex_number"],
+            name=costume_data["name"],
+            costume=costume_data["costume"]
+        ).first()
+
+        if existing_costume:
+            # Update fields if needed
+            if (existing_costume.image_url != costume_data["image_url"] or
+                existing_costume.shiny_released != costume_data["shiny_released"] or
+                existing_costume.shiny_image_url != costume_data["shiny_image_url"]):
+                
+                existing_costume.image_url = costume_data["image_url"]
+                existing_costume.shiny_released = costume_data["shiny_released"]
+                existing_costume.shiny_image_url = costume_data["shiny_image_url"]
+                db.session.commit()
+                count_updated += 1
+            else:
+                count_skipped += 1
+        else:
+            # Insert new costume entry
+            print(f"Inserting new costume Pokémon {costume_data['name']} with dex number {costume_data['dex_number']}")
+            new_costume = Costume(
                 dex_number=costume_data["dex_number"],
                 name=costume_data["name"],
-                costume=costume_data["costume"]
-            ).first()
+                costume=costume_data["costume"],
+                image_url=costume_data["image_url"],
+                shiny_released=costume_data["shiny_released"],
+                shiny_image_url=costume_data["shiny_image_url"],
+                brady_own=False,
+                brady_shiny=False,
+                matt_own=False,
+                matt_shiny=False
+            )
+            db.session.add(new_costume)
+            db.session.commit()
+            count_inserted += 1
 
-            if existing_costume:
-                # Update fields if needed
-                if (existing_costume.image_url != costume_data["image_url"] or
-                    existing_costume.shiny_released != costume_data["shiny_released"] or
-                    existing_costume.shiny_image_url != costume_data["shiny_image_url"]):
-                    
-                    existing_costume.image_url = costume_data["image_url"]
-                    existing_costume.shiny_released = costume_data["shiny_released"]
-                    existing_costume.shiny_image_url = costume_data["shiny_image_url"]
-                    db.session.commit()
-                    count_updated += 1
-                else:
-                    count_skipped += 1
-            else:
-                # Insert new costume entry
-                print(f"Inserting new costume Pokémon {costume_data['name']} with dex number {costume_data['dex_number']}")
-                new_costume = Costume(
-                    dex_number=costume_data["dex_number"],
-                    name=costume_data["name"],
-                    costume=costume_data["costume"],
-                    image_url=costume_data["image_url"],
-                    shiny_released=costume_data["shiny_released"],
-                    shiny_image_url=costume_data["shiny_image_url"],
-                    brady_own=False,
-                    brady_shiny=False,
-                    matt_own=False,
-                    matt_shiny=False
-                )
-                db.session.add(new_costume)
-                db.session.commit()
-                count_inserted += 1
-
-        print(f"Finished processing Costume Pokémon")
-        print(f"Total Costumes added: {count_inserted}")
-        print(f"Total Costumes updated: {count_updated}")
-        print(f"Total Costumes skipped: {count_skipped}")
-        print(f"Fetched and processed data in {time.time() - start_time:.2f} seconds")
+    print(f"Finished processing Costume Pokémon")
+    print(f"Total Costumes added: {count_inserted}")
+    print(f"Total Costumes updated: {count_updated}")
+    print(f"Total Costumes skipped: {count_skipped}")
+    print(f"Fetched and processed data in {time.time() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
     with app.app_context():
-        fetch_costume_data(app.app_context())
+        fetch_costume_data()
