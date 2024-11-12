@@ -16,6 +16,10 @@ $(document).ready(function () {
     $(document).on('change', '.brady-own-checkbox, .brady-shiny-checkbox, .matt-own-checkbox, .matt-shiny-checkbox', function() {
         markChanged();
         $(this).attr('data-changed', 'true'); // Mark as changed
+
+        // Update the data-filter attribute
+        const isChecked = $(this).is(':checked') ? 'Yes' : 'No';
+        $(this).closest('td').attr('data-filter', isChecked);
     });
 
     // Save Changes button event
@@ -35,6 +39,10 @@ $(document).ready(function () {
             data: JSON.stringify(changes),
             success: function () {
                 alert('Changes saved successfully!');
+                
+                // Invalidate and redraw the DataTable
+                updateDataTableAfterChanges();
+
                 resetChanges();
             },
             error: function () {
@@ -69,6 +77,21 @@ $(document).ready(function () {
         return { checkboxes: checkboxesData };
     }
 
+    // Invalidate and redraw DataTable rows after changes are saved
+    function updateDataTableAfterChanges() {
+        // For each changed checkbox, invalidate the DataTable row
+        $('.brady-own-checkbox[data-changed], .brady-shiny-checkbox[data-changed], .matt-own-checkbox[data-changed], .matt-shiny-checkbox[data-changed]').each(function () {
+            const $checkbox = $(this);
+            const rowElement = $checkbox.closest('tr');
+            const dataTableRow = window.costumesTable.row(rowElement);
+            dataTableRow.invalidate(); // Invalidate the row's cached data
+            $checkbox.removeAttr('data-changed'); // Remove the data-changed attribute
+        });
+    
+        // Redraw the DataTable to reflect changes
+        window.costumesTable.draw(false);
+    }
+
     // Apply filter settings for DataTable columns
     function applyFilter(dataTable, filter, value) {
         const columnIndex = filter.columnIndex;
@@ -100,16 +123,22 @@ $(document).ready(function () {
             } else if (filterType === 'numberExact') {
                 $(this).html('<input type="number" placeholder="Search ' + title + '" />');
             } else if (filterType === 'select') {
+                // Manually add a single "All" option and then add unique options
                 let selectHtml = '<select><option value="">All</option>';
-                column.options.forEach(opt => {
-                    selectHtml += `<option value="${opt}">${opt}</option>`;
+
+                // Use a Set to ensure options are unique and avoid duplicates
+                const uniqueOptions = new Set(column.options);
+                uniqueOptions.forEach(opt => {
+                    if (opt !== "All") {  // Avoid adding "All" again
+                        selectHtml += `<option value="${opt}">${opt}</option>`;
+                    }
                 });
+
                 selectHtml += '</select>';
                 $(this).html(selectHtml);
-            } else {
-                $(this).html('');
             }
 
+            // Event listeners for filter inputs
             $('input', this).on('keyup change clear', function () {
                 const val = this.value;
                 if (filterType === 'numberExact') {
@@ -119,6 +148,7 @@ $(document).ready(function () {
                 }
             });
 
+            // Handle select dropdown change with custom filters for image columns
             $('select', this).on('change', function () {
                 const val = $(this).val();
                 if (column.specialFilter) {
@@ -134,7 +164,16 @@ $(document).ready(function () {
         });
     }
 
-    // Initialize a DataTable with custom settings
+    // Custom filter for image presence
+    function applyImageFilter(column, value) {
+        if (value === "Has Image" || value === "No Image") {
+            column.search(value, true, false).draw();
+        } else {
+            column.search('').draw(); // Reset filter for "All"
+        }
+    }
+
+    // Modify initializeDataTable to include image filtering logic
     function initializeDataTable(options) {
         const tableSelector = options.tableSelector;
         const table = $(tableSelector);
@@ -164,6 +203,25 @@ $(document).ready(function () {
 
         initializeFilters(clonedHeader, options, dataTable);
 
+        // Additional logic for Image filters
+        dataTable.columns().every(function(index) {
+            const column = this;
+        
+            $('select', clonedHeader.find('th').eq(index)).on('change', function () {
+                const val = $(this).val();
+                const columnTitle = options.columns[index].title;
+        
+                // Apply custom image filter logic for "Image" and "Shiny Image" columns
+                if (columnTitle === 'Image' || columnTitle === 'Shiny Image') {
+                    applyImageFilter(column, val);
+                } else if (val) {
+                    column.search('^' + $.fn.dataTable.util.escapeRegex(val) + '$', true, false).draw();
+                } else {
+                    column.search('').draw();
+                }
+            });
+        });
+
         if (options.showEntriesSelector) {
             $(options.showEntriesSelector).on('change', function () {
                 dataTable.page.len(this.value).draw();
@@ -181,7 +239,7 @@ $(document).ready(function () {
         return dataTable;
     }
 
-    // === Initialize Costumes DataTable ===
+    // Initialize DataTable with adjusted columns
     window.costumesTable = initializeDataTable({
         tableSelector: '#costumesTable',
         paging: true,
@@ -196,8 +254,58 @@ $(document).ready(function () {
             { title: 'Name', filterType: 'text' },
             { title: 'Costume', filterType: 'text' },
             { title: 'Image', filterType: 'select', options: ['All', 'Has Image', 'No Image'] },
-            { title: 'Brady 👤', filterType: 'select', options: ['Yes', 'No'] },
-            { title: 'Matt 👤', filterType: 'select', options: ['Yes', 'No'] },
+            // Brady 👤 column
+            { 
+                title: 'Brady 👤', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        return $(row).find('td').eq(meta.col).attr('data-filter') || '';
+                    }
+                    return null; // Use default renderer
+                }
+            },
+            // Matt 👤 column
+            { 
+                title: 'Matt 👤', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        return $(row).find('td').eq(meta.col).attr('data-filter') || '';
+                    }
+                    return null; // Use default renderer
+                }
+            },
+            // Shiny Released column
+            { title: 'Shiny Released', filterType: 'select', options: ['Yes', 'No'] },
+            // Shiny Image column
+            { title: 'Shiny Image', filterType: 'select', options: ['All', 'Has Image', 'No Image'] },
+            // Brady ✨ column
+            { 
+                title: 'Brady ✨', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        return $(row).find('td').eq(meta.col).attr('data-filter') || '';
+                    }
+                    return null; // Use default renderer
+                }
+            },
+            // Matt ✨ column
+            { 
+                title: 'Matt ✨', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        return $(row).find('td').eq(meta.col).attr('data-filter') || '';
+                    }
+                    return null; // Use default renderer
+            }
+        },
             { title: 'Shiny Released', filterType: 'select', options: ['Yes', 'No'] },
             { title: 'Shiny Image', filterType: 'select', options: ['All', 'Has Image', 'No Image'] },
             { title: 'Brady ✨', filterType: 'select', options: ['Yes', 'No'] },
@@ -226,6 +334,7 @@ $(document).ready(function () {
         $(`.${columnClass}`).each(function () {
             $(this).prop('checked', isChecked);
             $(this).attr('data-changed', 'true');
+            $(this).trigger('change'); // Trigger the change event
             markChanged();
         });
     }

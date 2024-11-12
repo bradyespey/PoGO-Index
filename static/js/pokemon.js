@@ -16,11 +16,14 @@ $(document).ready(function () {
         console.log("Change detected, hasChanges set to:", hasChanges); // Debug log
     }
 
-    // Attach change event listeners to all checkboxes and note inputs
+    // Attach change event listeners to all checkboxes
     $(document).on('change', '.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox', function() {
         markChanged();
         $(this).attr('data-changed', 'true'); // Mark as changed
-        console.log(`Checkbox changed:`, this); // Debug log
+
+        // Update the data-filter attribute
+        const isChecked = $(this).is(':checked') ? 'Yes' : 'No';
+        $(this).closest('td').attr('data-filter', isChecked);
     });
 
     $(document).on('input', '.note-edit', function() {
@@ -41,20 +44,25 @@ $(document).ready(function () {
 
     // Update all checkboxes in a column when "Select All" is toggled
     function updateColumnCheckboxes(columnIndex, isChecked) {
-        var table = window.pokemonTable;
-    
+        const table = window.pokemonTable;
+
         table.rows({ page: 'current' }).every(function () {
-            var $checkboxCell = $(this.node()).find('td').eq(columnIndex);
-            var $checkbox = $checkboxCell.find('input[type="checkbox"]');
-    
+            const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
+            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
+
             if ($checkbox.length) {
+                // Set checkbox state
                 $checkbox.prop('checked', isChecked);
-                $checkbox.attr('data-changed', 'true'); // Mark as changed
-                markChanged(); // Track change for "Select All"
-                console.log("Select All toggled, checkbox updated:", $checkbox); // Debug log
+
+                // Update the `data-filter` attribute in the cell
+                const filterValue = isChecked ? 'Yes' : 'No';
+                $checkboxCell.attr('data-filter', filterValue);
+
+                // Trigger the change event
+                $checkbox.trigger('change');
             }
         });
-    }    
+    }
 
     // Collect changes from notes and checkboxes to send to the backend
     function collectChanges() {
@@ -108,17 +116,33 @@ $(document).ready(function () {
             data: JSON.stringify(changes),
             success: function () {
                 alert('Changes saved successfully!');
-                hasChanges = false; // Reset change tracker
-
-                // Reset `data-changed` attribute on all checkboxes and note edits after save
-                $('.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox, .note-edit').removeAttr('data-changed');
-                console.log("Changes saved, hasChanges reset to:", hasChanges); // Debug log
+                hasChanges = false;
+            
+                // Update the DataTable to reflect changes
+                updateDataTableAfterChanges();
+            
+                console.log("Changes saved, hasChanges reset to:", hasChanges);
             },
             error: function () {
                 alert('Failed to save changes. Please try again.');
             }
         });
     });
+
+    // Invalidate and redraw DataTable rows after changes are saved
+    function updateDataTableAfterChanges() {
+        // For each changed checkbox, invalidate the DataTable row
+        $('.matt-have-checkbox[data-changed], .matt-lucky-checkbox[data-changed], .ipad-lucky-checkbox[data-changed]').each(function () {
+            const $checkbox = $(this);
+            const rowElement = $checkbox.closest('tr');
+            const dataTableRow = window.pokemonTable.row(rowElement);
+            dataTableRow.invalidate();
+            $checkbox.removeAttr('data-changed');
+        });
+    
+        // Redraw the DataTable to reflect changes
+        window.pokemonTable.draw(false);
+    }
 
     // === DATA TABLE INITIALIZATION AND FILTERING ===
 
@@ -270,12 +294,45 @@ $(document).ready(function () {
             { title: 'Image', filterType: null },
             { title: 'Name', filterType: 'text' },
             { title: 'Type', filterType: 'select', options: ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flying', 'Ghost', 'Grass', 'Ground', 'Ice', 'Poison', 'Psychic', 'Rock', 'Steel', 'Water'] },
-            { title: 'Brady', filterType: 'select', options: ['Yes', 'No'] },
-            { title: 'Brady Lucky', filterType: 'select', options: ['Yes', 'No'] },
-            { title: 'Matt', filterType: 'select', options: ['Yes', 'No'] },
-            { title: 'Matt Lucky', filterType: 'select', options: ['Yes', 'No'] },
+            { title: 'Brady 👤', filterType: 'select', options: ['Yes', 'No'] },
+            { title: 'Brady 🎲', filterType: 'select', options: ['Yes', 'No'] },
+            { 
+                title: 'Matt 👤', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
+            { 
+                title: 'Matt 🎲', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
             { title: 'iPad', filterType: 'select', options: ['Yes', 'No'] },
-            { title: 'iPad Lucky', filterType: 'select', options: ['Yes', 'No'] },
+            { 
+                title: 'iPad 🎲', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
             { title: 'Note', filterType: 'select', options: ['Has Notes', 'No Notes'], specialFilter: function (column, val) {
                 if (val === 'Has Notes') {
                     column.search('^(?!\\s*$).+', true, false).draw();
@@ -342,72 +399,64 @@ $(document).ready(function () {
 
     // === SELECT ALL CHECKBOXES FUNCTIONALITY ===
 
-    // Function to update checkboxes in a column
+    // Function to update checkboxes in a column when "Select All" is used
     function updateColumnCheckboxes(columnIndex, isChecked) {
         const table = window.pokemonTable;
-    
+
         table.rows({ page: 'current' }).every(function () {
             const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
             const $checkbox = $checkboxCell.find('input[type="checkbox"]');
-    
+
             if ($checkbox.length) {
+                // Set checkbox state to match "Select All" checkbox
                 $checkbox.prop('checked', isChecked);
-                $checkbox.attr('data-changed', 'true'); // Ensure the attribute is set
-                markChanged(); // Track change for "Select All"
-                console.log("Select All toggled, checkbox updated:", $checkbox); // Debug log
+
+                // Mark the checkbox as changed and set data-filter attribute
+                $checkbox.attr('data-changed', 'true').trigger('change');
+                $checkboxCell.attr('data-filter', isChecked ? 'Yes' : 'No');
+                markChanged(); // Track that changes were made
             }
         });
     }
 
    // Event listeners for header checkboxes
-    $('#selectAllMatt').on('change', function () {
-        var isChecked = $(this).is(':checked');
-        hasChanges = true; // Track changes when "Select All" is used
-        updateColumnCheckboxes(6, isChecked);
+   $('#selectAllMatt').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes(6, isChecked); // Update all checkboxes in Matt column
     });
 
     $('#selectAllMattLucky').on('change', function () {
-        var isChecked = $(this).is(':checked');
-        hasChanges = true; // Track changes when "Select All" is used
-        updateColumnCheckboxes(7, isChecked);
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes(7, isChecked); // Update all checkboxes in Matt Lucky column
     });
 
     $('#selectAlliPadLucky').on('change', function () {
-        var isChecked = $(this).is(':checked');
-        hasChanges = true; // Track changes when "Select All" is used
-        updateColumnCheckboxes(9, isChecked);
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes(9, isChecked); // Update all checkboxes in iPad Lucky column
     });
 
-    // Ensure that when a checkbox is manually changed, we update the header checkbox state
+    // Ensure the header checkbox is updated based on row checkbox states
     function updateHeaderCheckboxState(columnIndex, headerCheckboxId) {
-        var table = window.pokemonTable;
+        const table = window.pokemonTable;
+        let allChecked = true;
+        let anyChecked = false;
 
-        var allChecked = true;
-        var anyChecked = false;
+        table.rows({ page: 'current' }).every(function () {
+            const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
+            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
 
-        table.rows({ page: 'current' }).every(function (rowIdx, tableLoop, rowLoop) {
-            var data = this.data();
-            var $row = $(this.node());
-
-            var $checkboxCell = $row.find('td').eq(columnIndex);
-            var $checkbox = $checkboxCell.find('input[type="checkbox"]');
             if ($checkbox.length) {
-                if (!$checkbox.is(':checked')) {
-                    allChecked = false;
-                } else {
+                if ($checkbox.is(':checked')) {
                     anyChecked = true;
+                } else {
+                    allChecked = false;
                 }
             }
         });
 
-        var $headerCheckbox = $('#' + headerCheckboxId);
-        if (allChecked) {
-            $headerCheckbox.prop('checked', true).prop('indeterminate', false);
-        } else if (anyChecked) {
-            $headerCheckbox.prop('checked', false).prop('indeterminate', true);
-        } else {
-            $headerCheckbox.prop('checked', false).prop('indeterminate', false);
-        }
+        const $headerCheckbox = $('#' + headerCheckboxId);
+        $headerCheckbox.prop('checked', allChecked);
+        $headerCheckbox.prop('indeterminate', !allChecked && anyChecked);
     }
 
     // Event listeners for individual checkboxes to update header checkbox state

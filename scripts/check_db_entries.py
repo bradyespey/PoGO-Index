@@ -1,77 +1,84 @@
 import os
 import sys
 from pathlib import Path
+from sqlalchemy import inspect, Table, MetaData, select
+from sqlalchemy.exc import OperationalError
 
-# Add the parent directory to the system path, so it can find app.py
+# Add the project root directory to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+# Importing the app and db for database management
 from app import app, db
-from models import Pokemon, PokeGenieEntry, ShinyPokemon, SpecialsPokemon, Costume, Form, Rocket, Note
+
+# User-defined variables
+TABLE_TO_OUTPUT = 'costumes'  # Set to 'all' or specific table name
+NUM_ROWS_TO_OUTPUT = '100'  # Set to 'all' or integer number of rows as a string
 
 def check_table_entries():
     with app.app_context():
-        # Pokémon table
-        print("Checking Pokémon table entries:")
-        pokemon_entries = db.session.query(Pokemon.id, Pokemon.name, Pokemon.type, Pokemon.image_url).limit(5).all()
-        for p in pokemon_entries:
-            print(f"id: {p.id}, name: {p.name}, type: {p.type}, image_url: {p.image_url}")
+        # Get the inspector for the database
+        inspector = inspect(db.engine)
+        all_tables = inspector.get_table_names()
+        if not all_tables:
+            print("No tables found in the database.")
+            return
 
-        # Poke Genie table
-        print("\nChecking Poke Genie table entries:")
-        poke_genie_entries = db.session.query(
-            PokeGenieEntry.index, PokeGenieEntry.name, PokeGenieEntry.form, PokeGenieEntry.pokemon_number, 
-            PokeGenieEntry.gender, PokeGenieEntry.cp, PokeGenieEntry.hp, PokeGenieEntry.atk_iv, 
-            PokeGenieEntry.def_iv, PokeGenieEntry.sta_iv, PokeGenieEntry.iv_avg, PokeGenieEntry.level_min, 
-            PokeGenieEntry.level_max, PokeGenieEntry.quick_move, PokeGenieEntry.charge_move, 
-            PokeGenieEntry.charge_move_2, PokeGenieEntry.scan_date, PokeGenieEntry.original_scan_date, 
-            PokeGenieEntry.catch_date, PokeGenieEntry.weight, PokeGenieEntry.height, PokeGenieEntry.lucky, 
-            PokeGenieEntry.shadow_purified, PokeGenieEntry.favorite, PokeGenieEntry.dust, 
-            PokeGenieEntry.rank_g_pct, PokeGenieEntry.rank_g_num, PokeGenieEntry.stat_prod_g, 
-            PokeGenieEntry.dust_cost_g, PokeGenieEntry.candy_cost_g, PokeGenieEntry.name_g, 
-            PokeGenieEntry.form_g, PokeGenieEntry.sha_pur_g, PokeGenieEntry.rank_u_pct, PokeGenieEntry.rank_u_num,
-            PokeGenieEntry.stat_prod_u, PokeGenieEntry.dust_cost_u, PokeGenieEntry.candy_cost_u, 
-            PokeGenieEntry.name_u, PokeGenieEntry.form_u, PokeGenieEntry.sha_pur_u, PokeGenieEntry.rank_l_pct, 
-            PokeGenieEntry.rank_l_num, PokeGenieEntry.stat_prod_l, PokeGenieEntry.dust_cost_l, 
-            PokeGenieEntry.candy_cost_l, PokeGenieEntry.name_l, PokeGenieEntry.form_l, 
-            PokeGenieEntry.marked_for_pvp).limit(5).all()
-        for pg in poke_genie_entries:
-            print(pg)
+        print(f"Database found with {len(all_tables)} tables.")
 
-        # Shiny Pokémon table
-        print("\nChecking Shiny Pokémon table entries:")
-        shiny_entries = db.session.query(ShinyPokemon.id, ShinyPokemon.dex_number, ShinyPokemon.name, ShinyPokemon.method).limit(5).all()
-        for s in shiny_entries:
-            print(f"id: {s.id}, dex_number: {s.dex_number}, name: {s.name}, method: {s.method}")
+        # Determine which tables to process
+        if TABLE_TO_OUTPUT.lower() == 'all':
+            tables_to_process = all_tables
+        else:
+            if TABLE_TO_OUTPUT in all_tables:
+                tables_to_process = [TABLE_TO_OUTPUT]
+            else:
+                print(f"Table '{TABLE_TO_OUTPUT}' not found in the database.")
+                return
 
-        # Specials Pokémon table
-        print("\nChecking Specials Pokémon table entries:")
-        specials_entries = db.session.query(SpecialsPokemon.id, SpecialsPokemon.dex_number, SpecialsPokemon.name, SpecialsPokemon.type).limit(5).all()
-        for sp in specials_entries:
-            print(f"id: {sp.id}, dex_number: {sp.dex_number}, name: {sp.name}, type: {sp.type}")
+        # Create a MetaData object for reflection
+        metadata = MetaData()
 
-        # Costume Pokémon table
-        print("\nChecking Costume Pokémon table entries:")
-        costume_entries = db.session.query(Costume.id, Costume.dex_number, Costume.name, Costume.costume).limit(5).all()
-        for c in costume_entries:
-            print(f"id: {c.id}, dex_number: {c.dex_number}, name: {c.name}, costume: {c.costume}")
+        for table_name in tables_to_process:
+            print(f"\nFirst {NUM_ROWS_TO_OUTPUT} rows for '{table_name}' table:")
+            # Reflect the table
+            try:
+                table = Table(table_name, metadata, autoload_with=db.engine)
+            except Exception as e:
+                print(f"Error reflecting table '{table_name}': {e}")
+                continue
 
-        # Forms table
-        print("\nChecking Forms table entries:")
-        form_entries = db.session.query(Form.id, Form.dex_number, Form.name, Form.form).limit(5).all()
-        for f in form_entries:
-            print(f"id: {f.id}, dex_number: {f.dex_number}, name: {f.name}, form: {f.form}")
+            # Get column names
+            columns = [str(column.name) for column in table.columns]
+            # Print column headers in CSV format
+            print(", ".join(columns))
 
-        # Rocket Pokémon table
-        print("\nChecking Rocket Pokémon table entries:")
-        rocket_entries = db.session.query(Rocket.id, Rocket.dex_number, Rocket.name, Rocket.method).limit(5).all()
-        for r in rocket_entries:
-            print(f"id: {r.id}, dex_number: {r.dex_number}, name: {r.name}, method: {r.method}")
+            # Build a select query
+            stmt = select(table)
+            if NUM_ROWS_TO_OUTPUT.lower() != 'all':
+                try:
+                    limit = int(NUM_ROWS_TO_OUTPUT)
+                    stmt = stmt.limit(limit)
+                except ValueError:
+                    print(f"Invalid number of rows: {NUM_ROWS_TO_OUTPUT}")
+                    return
 
-        # Notes table
-        print("\nChecking Notes table entries:")
-        note_entries = db.session.query(Note.id, Note.pokemon_id, Note.note_text).limit(5).all()
-        for n in note_entries:
-            print(f"id: {n.id}, pokemon_id: {n.pokemon_id}, note_text: {n.note_text}")
+            # Execute the query
+            try:
+                result = db.session.execute(stmt)
+                rows = result.fetchall()
+                if not rows:
+                    print("No entries found.")
+                    continue
+
+                # Print the rows
+                for row in rows:
+                    # Access row data using the mapping interface
+                    row_mapping = row._mapping
+                    row_data = [str(row_mapping.get(col, '')) for col in columns]
+                    print(", ".join(row_data))
+            except Exception as e:
+                print(f"Error querying table '{table_name}': {e}")
+                continue
 
 if __name__ == "__main__":
     check_table_entries()

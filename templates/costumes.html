@@ -84,8 +84,10 @@
                     <!-- Display Image -->
                     <td>
                         {% if costume.image_url %}
+                            <span style="display:none;">Has Image</span>
                             <img src="{{ costume.image_url }}" alt="Image of {{ costume.name }}" style="width: 50px; height: auto;">
                         {% else %}
+                            <span style="display:none;">No Image</span>
                             N/A
                         {% endif %}
                     </td>
@@ -114,8 +116,10 @@
                     <!-- Display Shiny Image -->
                     <td>
                         {% if costume.shiny_image_url %}
+                            <span style="display:none;">Has Image</span>
                             <img src="{{ costume.shiny_image_url }}" alt="Shiny image of {{ costume.name }}" style="width: 50px; height: auto;">
                         {% else %}
+                            <span style="display:none;">No Image</span>
                             N/A
                         {% endif %}
                     </td>

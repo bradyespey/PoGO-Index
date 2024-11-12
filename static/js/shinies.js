@@ -16,6 +16,10 @@ $(document).ready(function () {
     $(document).on('change', '.brady-own-checkbox, .brady-lucky-checkbox, .matt-own-checkbox, .matt-lucky-checkbox', function() {
         markChanged();
         $(this).attr('data-changed', 'true'); // Mark as changed
+
+        // Update the data-filter attribute
+        const isChecked = $(this).is(':checked') ? 'Yes' : 'No';
+        $(this).closest('td').attr('data-filter', isChecked);
     });
 
     // Ensure the click event handler for "Save Changes" button is only attached once
@@ -36,9 +40,10 @@ $(document).ready(function () {
             success: function () {
                 alert('Changes saved successfully!');
                 hasChanges = false; // Reset change tracker
-    
-                // Reset `data-changed` attribute on all checkboxes and note edits after save
-                $('.brady-own-checkbox, .brady-lucky-checkbox, .matt-own-checkbox, .matt-lucky-checkbox').removeAttr('data-changed');
+            
+                // Update the DataTable to reflect changes
+                updateDataTableAfterChanges();
+            
                 console.log("Changes saved, hasChanges reset to:", hasChanges); // Debug log
             },
             error: function () {
@@ -72,6 +77,21 @@ $(document).ready(function () {
         });
 
         return { checkboxes: checkboxesData };
+    }
+
+    // Invalidate and redraw DataTable rows after changes are saved
+    function updateDataTableAfterChanges() {
+        // For each changed checkbox, invalidate the DataTable row
+        $('.brady-own-checkbox[data-changed], .brady-lucky-checkbox[data-changed], .matt-own-checkbox[data-changed], .matt-lucky-checkbox[data-changed]').each(function () {
+            const $checkbox = $(this);
+            const rowElement = $checkbox.closest('tr');
+            const dataTableRow = window.shiniesTable.row(rowElement);
+            dataTableRow.invalidate(); // Invalidate the row's cached data
+            $checkbox.removeAttr('data-changed'); // Remove the data-changed attribute
+        });
+    
+        // Redraw the DataTable to reflect changes
+        window.shiniesTable.draw(false);
     }
 
     // === DATA TABLE INITIALIZATION AND FILTERING ===
@@ -207,10 +227,58 @@ $(document).ready(function () {
             { title: 'Name', filterType: 'text' },      // Index 1
             { title: 'Form', filterType: 'text' },      // Index 2
             { title: 'Method', filterType: 'text' },    // Index 3
-            { title: 'Brady 👤', filterType: 'select', options: ['Yes', 'No'] }, // Index 4
-            { title: 'Brady 🎲', filterType: 'select', options: ['Yes', 'No'] }, // Index 5
-            { title: 'Matt 👤', filterType: 'select', options: ['Yes', 'No'] },  // Index 6
-            { title: 'Matt 🎲', filterType: 'select', options: ['Yes', 'No'] },  // Index 7
+            // Brady 👤 column (Index 4)
+            { 
+                title: 'Brady 👤', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
+            // Brady 🎲 column (Index 5)
+            { 
+                title: 'Brady 🎲', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
+            // Matt 👤 column (Index 6)
+            { 
+                title: 'Matt 👤', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
+            // Matt 🎲 column (Index 7)
+            { 
+                title: 'Matt 🎲', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, val, meta) {
+                    if (type === 'filter' || type === 'sort') {
+                        var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(row[meta.col]).html();
+                }
+            },
         ],
         extraFilters: [
             { selector: '#searchName', columnIndex: 1, type: 'text' },
@@ -250,6 +318,7 @@ $(document).ready(function () {
         $(`.${columnClass}`).each(function () {
             $(this).prop('checked', isChecked);
             $(this).attr('data-changed', 'true');
+            $(this).trigger('change'); // Trigger the change event
             markChanged();
         });
     }
