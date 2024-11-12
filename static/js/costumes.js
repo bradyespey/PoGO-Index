@@ -184,6 +184,8 @@ $(document).ready(function () {
         const clonedHeader = originalHeader.clone(true).addClass('clone').appendTo(table.find('thead'));
 
         const dataTable = table.DataTable({
+            responsive: false,  // Disable responsive behavior
+            scrollX: true,      // Enable horizontal scrolling
             orderCellsTop: true,
             fixedHeader: true,
             paging: options.paging !== false,
