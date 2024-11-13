@@ -18,6 +18,19 @@ FORMS_TO_SKIP = [" Mega ", " Alolan ", " Galarian ", " Hisuian "]
 def fetch_pokemon_data():
     print("Fetching and updating Pokémon data...")
 
+    # Determine the image directory based on environment
+    if os.environ.get("DYNO"):
+        # Running on Heroku
+        local_image_dir = '/tmp/mons'
+        relative_image_url_base = '/tmp'  # Temporary directory for Heroku
+    else:
+        # Running locally
+        local_image_dir = '/Users/bradyespey/Projects/GitHub/PoGO/static/images/mons'
+        relative_image_url_base = '/static/images/mons'
+    
+    # Ensure image directory exists
+    os.makedirs(local_image_dir, exist_ok=True)  
+
     # Scrape Pokémon data
     url = "https://pokemondb.net/go/pokedex"
     try:
@@ -37,10 +50,6 @@ def fetch_pokemon_data():
     
     rows = table.find_all("tr")[1:]  # Skip the header row
     print(f"Found {len(rows)} Pokémon entries.")
-
-    local_image_dir = '/Users/bradyespey/Projects/GitHub/PoGO/static/images/mons'
-    relative_image_url_base = '/static/images/mons'
-    os.makedirs(local_image_dir, exist_ok=True)  # Ensure image directory exists
 
     count_inserted, count_updated, count_skipped, count_with_images = 0, 0, 0, 0
 
@@ -73,7 +82,8 @@ def fetch_pokemon_data():
                 print(f"Failed to download image for {name}")
         
         # Update database with image URL
-        image_url_to_store = relative_image_url if os.path.exists(local_image_path) else None
+        image_url_to_store = relative_image_url if not os.environ.get("DYNO") else None
+        
         # Fetch or create Pokémon entry in the database
         pokemon = Pokemon.query.filter_by(dex_number=dex_number).first()
         if not pokemon:
