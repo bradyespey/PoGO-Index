@@ -8,12 +8,15 @@ body {
 }
 
 /* === Navbar Customization === */
-.navbar-brand .logo { height: 40px; }
+.navbar-brand .logo {
+    height: 40px;
+}
 
 .navbar-nav .nav-link {
     display: flex;
     align-items: center;
     color: #ffffff !important;
+    padding: 8px 12px;
 }
 
 .navbar-nav .nav-link .nav-icon {
@@ -22,7 +25,9 @@ body {
     margin-right: 5px;
 }
 
-.navbar-dark .navbar-nav .nav-link:hover { color: #f1c40f !important; }
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: #f1c40f !important;
+}
 
 .navbar-dark .navbar-toggler {
     border-color: rgba(255, 255, 255, 0.7);
@@ -31,15 +36,41 @@ body {
 .navbar-dark .navbar-toggler-icon {
     width: 30px;
     height: 30px;
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28 255, 255, 255, 1 %29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28%20255,%20255,%20255,%201%20%29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4%207h22M4%2015h22M4%2023h22'/%3E%3C/svg%3E");
 }
 
 .navbar-toggler:hover .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28 241, 196, 15, 1 %29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28%20241,%20196,%2015,%201%20%29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4%207h22M4%2015h22M4%2023h22'/%3E%3C/svg%3E");
 }
 
-/* === Headings === */
-main h2, h2 {
+/* Navbar adjustments for responsiveness */
+@media (max-width: 992px) {
+    .navbar-nav .nav-link {
+        padding: 4px 8px;
+        font-size: 0.85rem;
+    }
+    .navbar-toggler-icon {
+        width: 25px;
+        height: 25px;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-nav {
+        flex-direction: column;
+        align-items: center;
+    }
+    .navbar-nav .nav-link {
+        justify-content: center;
+        padding: 8px 0;
+    }
+    .navbar-brand .logo {
+        height: 30px;
+    }
+}
+
+/* === Headings and Counts === */
+h2, main h2 {
     color: #f1c40f;
     text-align: center;
     font-family: 'Poppins', sans-serif;
@@ -49,118 +80,124 @@ main h2, h2 {
     font-size: 2.5rem;
 }
 
-@media (max-width: 576px) { h2 { font-size: 2rem; } }
+@media (max-width: 576px) {
+    h2 {
+        font-size: 2rem;
+    }
+}
 
-/* === Counts Section === */
-.card { border-radius: 10px; }
+.card {
+    border-radius: 10px;
+}
 
-.card-title { margin-bottom: 0; }
+.card-title {
+    margin-bottom: 0;
+}
 
 .card-text {
     font-size: 2.5rem;
     margin: 0;
 }
 
-.text-dark.bg-light .card-text { color: #000000; }
-
-/* === Descriptions Section === */
-.descriptions h3 {
-    margin-top: 40px;
-    color: #f1c40f;
+.text-dark.bg-light .card-text {
+    color: #000000;
 }
 
-.descriptions a {
-    color: #3498db;
-    text-decoration: none;
+@media (max-width: 576px) {
+    .card-text {
+        font-size: 2rem;
+    }
 }
 
-.descriptions a:hover { text-decoration: underline; }
-
-/* === Footer Styles === */
-footer {
-    background-color: #333333;
+/* === Button Styling === */
+.btn {
+    font-weight: bold;
+    border-radius: 6px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-footer p { margin: 0; }
+#saveAllChangesButton {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+#saveAllChangesButton:hover {
+    background-color: #218838;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#resetFiltersButton {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: black;
+}
+
+#resetFiltersButton:hover {
+    background-color: #e0a800;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn + .btn {
+    margin-left: 8px;
+}
+
+@media (max-width: 768px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+}
 
 /* === Table Styles === */
-.table {
+table.dataTable {
     background-color: #ffffff;
     color: #212529;
-    width: 100%;
+    width: 100% !important;
     margin: 20px 0;
-    table-layout: auto;
+    table-layout: auto; /* Allow columns to adjust based on content */
+    border-collapse: collapse; /* Ensure gridlines are visible */
+    margin-top: 0 !important; /* Remove any margins causing gaps */
 }
 
-.table thead th {
-    padding: 4px 8px;
-    font-size: 0.9rem;
-    background-color: #e9ecef;
-    color: #495057;
+table.dataTable th, table.dataTable td {
+    border: 1px solid #dee2e6; /* Gridlines */
+    padding: 8px; /* Adjust padding if necessary */
     text-align: center;
+    font-size: 0.9rem;
+    /* white-space: nowrap; */ /* Commented out to allow text wrapping if necessary */
 }
 
-.table tbody tr {
-    background-color: #ffffff;
-    color: #212529;
+table.dataTable thead th {
+    background-color: #e9ecef; /* Gray background for headers */
+    color: #495057;
 }
 
-.table tbody tr:nth-of-type(even) {
+table.dataTable tbody tr:nth-of-type(even) {
     background-color: #f8f9fa;
 }
 
-.table tbody tr:hover {
+table.dataTable tbody tr:hover {
     background-color: #dee2e6;
 }
 
-.table td {
-    text-align: center;
-    padding: 6px 8px;
-    font-size: 0.9rem;
-}
-
-.table td img {
+table.dataTable td img {
     width: 50px;
     height: 50px;
 }
 
-.status-yes { color: #28a745; font-weight: bold; } /* Green checkmark */
-.status-no { color: #dc3545; font-weight: bold; } /* Red cross */
-
-/* Responsive Table Adjustments */
-.table-responsive {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+/* Status Indicator Styles */
+.status-yes {
+    color: #28a745;
+    font-weight: bold;
 }
 
-@media (max-width: 768px) {
-    .table td:nth-child(4),
-    .table td:nth-child(5),
-    .table td:nth-child(6),
-    .table td:nth-child(8),
-    .table td:nth-child(9),
-    .table th:nth-child(4),
-    .table th:nth-child(5),
-    .table th:nth-child(6),
-    .table th:nth-child(8),
-    .table th:nth-child(9) {
-        display: none;
-    }
-}
-
-@media (max-width: 576px) {
-    .table th,
-    .table td {
-        padding: 5px;
-        font-size: 12px;
-    }
-
-    .table td img {
-        width: 30px;
-        height: 30px;
-    }
+.status-no {
+    color: #dc3545;
+    font-weight: bold;
 }
 
 /* === DataTables Custom Styling === */
@@ -192,16 +229,8 @@ footer p { margin: 0; }
     color: #666666 !important;
 }
 
-div.dataTables_filter { display: none; } /* Hide default DataTables search box */
-
-.dataTables_wrapper .dataTables_filter input,
-.dataTables_wrapper .dataTables_length select {
-    background-color: #333333;
-    color: #ffffff;
-    border: 1px solid #666666;
-    border-radius: 3px;
-    padding: 3px 5px;
-    margin-left: 5px;
+div.dataTables_filter {
+    display: none; /* Hide default DataTables search box */
 }
 
 /* Custom Filters Row */
@@ -226,67 +255,61 @@ table.dataTable thead tr.filters input {
     border: 1px solid #ced4da;
 }
 
-/* Remove redundant black sorting icons */
+/* === Sort Indicators === */
 table.dataTable thead .sorting:before,
 table.dataTable thead .sorting:after,
 table.dataTable thead .sorting_asc:before,
 table.dataTable thead .sorting_desc:before {
-    content: "" !important;
+    content: "" !important; /* Remove default sorting icons */
 }
 
-/* Sort Indicators */
-table.dataTable thead .sorting_asc:after { content: " ▲"; }
-table.dataTable thead .sorting_desc:after { content: " ▼"; }
+table.dataTable thead .sorting_asc:after {
+    content: " ▲";
+}
+
+table.dataTable thead .sorting_desc:after {
+    content: " ▼";
+}
 
 /* Center checkboxes in header */
-th input[type="checkbox"] { margin: 0 auto; display: block; }
-
-/* === Button Styling === */
-.btn {
-    font-weight: bold;
-    border-radius: 6px;
-    padding: 8px 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+th input[type="checkbox"] {
+    margin: 0 auto;
+    display: block;
 }
 
-/* Save Changes Button */
-#saveAllChangesButton {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
+/* === Responsive Adjustments === */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
-#saveAllChangesButton:hover {
-    background-color: #218838;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Reset All Button */
-#resetFiltersButton {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: black;
-}
-
-#resetFiltersButton:hover {
-    background-color: #e0a800;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Button Spacing */
-.btn + .btn { margin-left: 8px; }
-
-/* Mobile Button Adjustments */
-@media (max-width: 768px) {
-    .btn {
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 16px;
+/* Adjust table cell padding and font size on small screens */
+@media (max-width: 576px) {
+    table.dataTable th, table.dataTable td {
+        padding: 5px;
+        font-size: 12px;
+    }
+    table.dataTable td img {
+        width: 30px;
+        height: 30px;
     }
 }
 
-/* === Preloader Styles === */
+/* Ensure tables use full width */
+.table-responsive .display.nowrap {
+    width: 100%;
+}
+
+/* Allow text wrapping on smaller screens */
+@media (max-width: 768px) {
+    table.dataTable th, table.dataTable td {
+        white-space: normal;
+    }
+}
+
+/* === Preloader Styles (Optional) === */
 #preloader {
     position: fixed;
     left: 0;
@@ -297,69 +320,6 @@ th input[type="checkbox"] { margin: 0 auto; display: block; }
     background: #000000 url('/static/images/preloader.gif') no-repeat center center;
 }
 
-body.loaded #preloader { display: none; }
-
-/* === Responsive Navbar === */
-@media (max-width: 576px) {
-    .navbar-nav {
-        text-align: center;
-    }
-    .navbar-nav .nav-link {
-        justify-content: center;
-    }
-    .card-text {
-        font-size: 2rem;
-    }
-}
-
-/* === Responsive Tables === */
-.table-responsive {
-    overflow-x: auto; /* Ensure horizontal scrolling is available for large tables */
-}
-
-/* === Pokémon Table Specific Styles === */
-#pokemonTable th,
-#pokemonTable td {
-    width: auto;              /* Allow columns to auto-adjust their width */
-    white-space: nowrap;      /* Prevent text from wrapping */
-    text-align: center;       /* Center-align content for consistency */
-}
-
-#pokemonTable thead input {
-    width: 80% !important;    /* Make input fields narrower */
-    padding: 4px;
-    font-size: 12px;
-}
-
-/* === Shinies Table Specific Styles === */
-#shiniesTable th,
-#shiniesTable td {
-    width: auto;              /* Allow columns to auto-adjust their width */
-    white-space: nowrap;      /* Prevent text wrapping */
-    text-align: center;       /* Center-align content for consistency */
-}
-
-#shiniesTable thead input {
-    width: 80% !important;    /* Make input fields narrower */
-    padding: 4px;
-    font-size: 12px;
-}
-
-/* === Costumes Table Specific Styles === */
-#costumesTable th,
-#costumesTable td {
-    width: auto;              /* Allow columns to auto-adjust their width */
-    white-space: nowrap;      /* Prevent text wrapping */
-    text-align: center;       /* Center-align content for consistency */
-}
-
-#costumesTable thead input {
-    width: 80% !important;    /* Make input fields narrower */
-    padding: 4px;
-    font-size: 12px;
-}
-
-/* Optional: Make sure the table takes full width within the responsive container */
-.table-responsive .display.nowrap {
-    width: 100%; /* Take full width of the container */
+body.loaded #preloader {
+    display: none;
 }
