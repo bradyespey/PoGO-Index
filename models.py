@@ -132,17 +132,6 @@ class ShinyPokemon(db.Model):
     def __repr__(self):
         return f"<ShinyPokemon {self.dex_number} - {self.name} ({self.form})>"
 
-# Specials Pokémon Model
-class SpecialsPokemon(db.Model):
-    __tablename__ = 'specials'
-    id = db.Column(db.Integer, primary_key=True)
-    dex_number = db.Column(db.Integer)
-    name = db.Column(db.String(100))
-    type = db.Column(db.String(50))
-
-    def __repr__(self):
-        return f"<SpecialsPokemon {self.dex_number} - {self.name} ({self.type})>"
-
 # Costume Pokémon Model
 class Costume(db.Model):
     __tablename__ = 'costumes'

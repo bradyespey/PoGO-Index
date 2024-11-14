@@ -3,7 +3,7 @@ from flask import (
 )
 from functools import wraps
 from models import (
-    db, Pokemon, Note, SpecialsPokemon, PokeGenieEntry,
+    db, Pokemon, Note, PokeGenieEntry,
     ShinyPokemon, Rocket, Costume, Form, User, AllPokemon
 )
 
@@ -237,12 +237,6 @@ def init_routes(app, google):
 
         return render_template('shinies.html', shinies_list=extended_shinies_list)
 
-    # Specials page route
-    @app.route('/pogo/specials')
-    def specials():
-        specials_data = SpecialsPokemon.query.all()
-        return render_template('specials.html', specials_data=specials_data)
-
     # Costumes page route
     @app.route('/pogo/costumes')
     def costumes():
@@ -352,13 +346,14 @@ def init_routes(app, google):
     # Login route
     @app.route('/pogo/login')
     def login():
+        # Capture the current page URL to return to after login
+        next_url = request.args.get('next') or request.referrer or url_for('info_page')
+        session['next_url'] = next_url  # Store the URL in the session
+
+        # Redirect to Google OAuth
         redirect_url = url_for('authorize', _external=True)
         print(f"Google OAuth redirect URL: {redirect_url}")  # Log the redirect URI being used
         return google.authorize_redirect(redirect_url)
-
-        next_url = request.args.get('next', url_for('info_page'))
-        session['next_url'] = next_url
-        return google.authorize_redirect(redirect_uri=url_for('authorize', _external=True))
 
     # OAuth2 callback route after user authenticates
     @app.route('/pogo/oauth2callback')
@@ -368,23 +363,19 @@ def init_routes(app, google):
             return "Authorization failed.", 400
         session['user'] = token  # Save user token in session
 
-        # Get the next URL and edit mode from the session
+        # Get the next URL from the session (default to 'info_page' if not available)
         next_url = session.pop('next_url', url_for('info_page'))
-        edit_mode = session.pop('edit_mode', False)
-
-        # Append 'edit=true' if in edit mode and it's not already in the URL
-        if edit_mode and 'edit=true' not in next_url:
-            separator = '&' if '?' in next_url else '?'
-            next_url += f"{separator}edit=true"
         return redirect(next_url)
 
     # Logout route to clear the session
     @app.route('/pogo/logout')
     def logout():
+        # Capture the current page URL to return to after logout
+        next_url = request.args.get('next') or request.referrer or url_for('info_page')
+
         # Clear all session data related to the user
         session.clear()
-        # Redirect to the homepage or a logout confirmation page instead of login
-        return redirect(url_for('info_page'))  # Replace 'info_page' with your homepage or landing page
+        return redirect(next_url)  # Redirect to the captured URL
 
     ### Protected Routes ###
 
@@ -414,15 +405,6 @@ def init_routes(app, google):
         with app.app_context():
             fetch_shiny_pokemon_data()
         return redirect(url_for('shinies'))
-
-    # Update Specials data route
-    @app.route('/pogo/update-specials', methods=['POST'])
-    @requires_auth
-    def update_specials():
-        from scripts.update_specials import fetch_and_update_specials  # Move import here
-        with app.app_context():
-            fetch_and_update_specials()
-        return redirect(url_for('specials'))
     
     # Update Costumes data route
     @app.route('/pogo/update-costumes', methods=['POST'])

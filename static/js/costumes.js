@@ -203,15 +203,20 @@ $(document).ready(function () {
         const tableSelector = options.tableSelector;
         const table = $(tableSelector);
         if (table.length === 0) return null;
-
-        table.find('thead tr.clone').remove();
+    
+        // Remove any previous cloned headers to prevent duplicates
+        table.find('thead tr.clone-header').remove();
+        
+        // Clone the header row if it doesn't already exist
         const originalHeader = table.find('thead tr').first();
-        const clonedHeader = originalHeader.clone(true).addClass('clone').appendTo(table.find('thead'));
-
+        const clonedHeader = originalHeader.clone(true)
+                            .addClass('clone-header')
+                            .appendTo(table.find('thead'));
+    
         const dataTable = table.DataTable({
-            scrollX: true,      // Enable horizontal scrolling
-            responsive: false,  // Disable responsive behavior
-            orderCellsTop: true,
+            scrollX: true,          // Enable horizontal scrolling
+            responsive: false,      // Disable responsive behavior
+            orderCellsTop: false,   // Disable orderCellsTop to fix Select All issues
             fixedHeader: true,
             paging: options.paging !== false,
             pageLength: options.pageLength || 10,
@@ -219,27 +224,23 @@ $(document).ready(function () {
             stateSave: false,
             searching: options.searching !== false,
             lengthChange: options.lengthChange !== false,
-            autoWidth: false,   // Disable automatic column width calculation
             columnDefs: options.columnDefs || [],
             stateSaveParams: (settings, data) => { data.search.search = ''; },
             initComplete: function () {
                 const api = this.api();
                 api.columns().visible(true);
                 api.columns.adjust();
-
-                // Adjust columns after images have loaded
-                adjustColumnsWhenImagesLoaded();
             }
         });
-
+    
         initializeFilters(clonedHeader, options, dataTable);
-
+    
         if (options.showEntriesSelector) {
             $(options.showEntriesSelector).on('change', function () {
                 dataTable.page.len(this.value).draw();
             });
         }
-
+    
         if (options.extraFilters) {
             options.extraFilters.forEach(filter => {
                 $(filter.selector).on('keyup change clear', function () {
@@ -247,7 +248,7 @@ $(document).ready(function () {
                 });
             });
         }
-
+    
         return dataTable;
     }
 
@@ -367,14 +368,14 @@ $(document).ready(function () {
         }
     });
 
-    // === Select All / Deselect All ===
-    function updateColumnCheckboxes(columnClass, isChecked) {
-        $(`.${columnClass}`).each(function () {
-            $(this).prop('checked', isChecked);
-            $(this).attr('data-changed', 'true');
-            $(this).trigger('change'); // Trigger the change event
-            markChanged();
-        });
+   // === Select All / Deselect All ===
+   function updateColumnCheckboxes(columnClass, isChecked) {
+    $(`.${columnClass}`).each(function () {
+        $(this).prop('checked', isChecked);
+        $(this).attr('data-changed', 'true');
+        $(this).trigger('change'); // Trigger the change event
+        markChanged();
+    });
     }
 
     $('#selectAllBradyOwn').on('change', function () {

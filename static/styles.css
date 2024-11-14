@@ -301,3 +301,40 @@ table.dataTable thead .sorting_desc:after {
 body.loaded #preloader {
     display: none;
 }
+
+/* === Global DataTable Styling for All Tables === */
+table.dataTable th, 
+table.dataTable td {
+    width: auto;                /* Allow columns to auto-adjust their width */
+    white-space: nowrap;        /* Prevent text wrapping in cells */
+    text-align: center;         /* Center-align content for visual consistency */
+    padding: 8px;               /* Add padding for readability */
+}
+
+/* Input field styles in the header row for all DataTables */
+table.dataTable thead input {
+    width: 80% !important;      /* Set a narrower width for search inputs */
+    padding: 4px;               /* Consistent padding for input fields */
+    font-size: 12px;            /* Smaller font size for inputs in header */
+}
+
+/* Ensures DataTables take up full width within responsive containers */
+.table-responsive .display.nowrap {
+    width: 100%;                /* Make DataTables take full width of container */
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    table.dataTable th, 
+    table.dataTable td {
+        font-size: 0.8rem;      /* Smaller font size on smaller screens */
+        padding: 5px;           /* Reduced padding on smaller screens */
+    }
+}
+
+/* Consistent header styling for all DataTables */
+table.dataTable thead th {
+    background-color: #e9ecef;  /* Light background color for headers */
+    color: #495057;             /* Standard dark text color for headers */
+    font-weight: bold;          /* Bold header text */
+}
