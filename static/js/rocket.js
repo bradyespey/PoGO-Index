@@ -1,21 +1,114 @@
 $(document).ready(function () {
+    let hasChanges = false; // Track if changes were made
+
+    // Centralized function to mark changes
+    function markChanged() {
+        hasChanges = true;
+    }
+
+    // Reset the change tracker after successful save
+    function resetChanges() {
+        hasChanges = false;
+        $('.matt-shadow-checkbox, .matt-purified-checkbox').removeAttr('data-changed');
+    }
+
+    // Attach change event listeners to all checkboxes
+    $(document).on('change', '.matt-shadow-checkbox, .matt-purified-checkbox', function() {
+        markChanged();
+        $(this).attr('data-changed', 'true'); // Mark as changed
+
+        // Update the data-filter attribute
+        const isChecked = $(this).is(':checked') ? 'Yes' : 'No';
+        $(this).closest('td').attr('data-filter', isChecked);
+    });
+
+    // Save Changes button event
+    $('#saveAllChangesButton').off('click').on('click', function () {
+        if (!hasChanges) {
+            alert("No changes to save!");
+            return;
+        }
+    
+        const changes = collectChanges();
+        console.log("Changes being sent to backend:", changes);
+    
+        $.ajax({
+            url: '/pogo/save-all-changes',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(changes),
+            success: function () {
+                alert('Changes saved successfully!');
+                hasChanges = false; // Reset change tracker
+            
+                // Update the DataTable to reflect changes
+                updateDataTableAfterChanges();
+            },
+            error: function () {
+                alert('Failed to save changes. Please try again.');
+            }
+        });
+    });    
+
+    // Collect changes from checkboxes to send to the backend
+    function collectChanges() {
+        const checkboxesData = [];
+
+        // Collect checkbox changes marked with data-changed attribute
+        $('.matt-shadow-checkbox[data-changed], .matt-purified-checkbox[data-changed]').each(function () {
+            const rocketId = $(this).attr('data-rocket-id');
+            let checkboxType;
+
+            if ($(this).hasClass('matt-shadow-checkbox')) checkboxType = 'rocket_matt_shadow';
+            else if ($(this).hasClass('matt-purified-checkbox')) checkboxType = 'rocket_matt_purified';
+
+            const checkedValue = $(this).is(':checked') ? 'Yes' : 'No';
+            if (rocketId !== undefined && checkboxType !== undefined) {
+                checkboxesData.push({
+                    rocket_id: rocketId,
+                    type: checkboxType,
+                    value: checkedValue
+                });
+            }
+        });
+
+        return { checkboxes: checkboxesData };
+    }
+
+    // Invalidate and redraw DataTable rows after changes are saved
+    function updateDataTableAfterChanges() {
+        // For each changed checkbox, invalidate the DataTable row
+        $('.matt-shadow-checkbox[data-changed], .matt-purified-checkbox[data-changed]').each(function () {
+            const $checkbox = $(this);
+            const rowElement = $checkbox.closest('tr');
+            const dataTableRow = window.rocketTable.row(rowElement);
+            dataTableRow.invalidate(); // Invalidate the row's cached data
+            $checkbox.removeAttr('data-changed'); // Remove the data-changed attribute
+        });
+    
+        // Redraw the DataTable to reflect changes
+        window.rocketTable.draw(false);
+    }
+
     // === DATA TABLE INITIALIZATION AND FILTERING ===
 
-    // Function to apply filters from extra filters
+    // Apply filters from extra filters
     function applyFilter(dataTable, filter, value) {
+        const columnIndex = filter.columnIndex;
+
         if (filter.type === 'select') {
             if (value) {
-                dataTable
-                    .column(filter.columnIndex)
-                    .search('^' + $.fn.dataTable.util.escapeRegex(value) + '$', true, false)
+                // Ensure case matches and spaces are trimmed
+                dataTable.column(columnIndex)
+                    .search('^' + $.fn.dataTable.util.escapeRegex(value.trim()) + '$', true, false)
                     .draw();
             } else {
-                dataTable.column(filter.columnIndex).search('', true, false).draw();
+                dataTable.column(columnIndex).search('', true, false).draw();
             }
         } else if (filter.type === 'numberExact') {
-            dataTable.column(filter.columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
+            dataTable.column(columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
         } else {
-            dataTable.column(filter.columnIndex).search(value).draw();
+            dataTable.column(columnIndex).search(value).draw();
         }
     }
 
@@ -126,19 +219,61 @@ $(document).ready(function () {
         lengthChange: false,
         showEntriesSelector: '#showEntries',
         columns: [
-            { title: '#', filterType: 'numberExact' },    // Index 0
-            { title: 'Name', filterType: 'text' },        // Index 1
-            {
-                title: 'Shadow Living Dex',
-                filterType: 'select',
-                options: ['Yes', 'No']
-            },                                            // Index 2
-            {
-                title: 'Purified Living Dex',
-                filterType: 'select',
-                options: ['Yes', 'No']
-            },                                            // Index 3
-            { title: 'Method', filterType: 'text' },      // Index 4
+            { title: '#', filterType: 'numberExact' },  // Index 0
+            { title: 'Name', filterType: 'text' },      // Index 1
+            // Brady Shadow column (Index 2)
+            { 
+                title: 'Brady Shadow', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                    if (type === 'filter' || type === 'sort') {
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(cell).html();
+                }
+            },
+            // Brady Purified column (Index 3)
+            { 
+                title: 'Brady Purified', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                    if (type === 'filter' || type === 'sort') {
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(cell).html();
+                }
+            },
+            // Matt Shadow column (Index 4)
+            { 
+                title: 'Matt Shadow', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                    if (type === 'filter' || type === 'sort') {
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(cell).html();
+                }
+            },
+            // Matt Purified column (Index 5)
+            { 
+                title: 'Matt Purified', 
+                filterType: 'select', 
+                options: ['Yes', 'No'],
+                data: function (row, type, set, meta) {
+                    var cell = meta.settings.aoData[meta.row].anCells[meta.col];
+                    if (type === 'filter' || type === 'sort') {
+                        return $(cell).attr('data-filter') || '';
+                    }
+                    return $(cell).html();
+                }
+            },
+            { title: 'Method', filterType: 'text' },    // Index 6
         ],
         extraFilters: [
             { selector: '#searchName', columnIndex: 1, type: 'text' },
@@ -146,33 +281,46 @@ $(document).ready(function () {
     });
 
     // === RESET FILTERS ===
-
     $('#resetFiltersButton').on('click', function () {
         if (window.rocketTable) {
-            // Clear DataTables filters
             window.rocketTable.search('').columns().search('').draw();
 
-            // Reset cloned header inputs and selects
+            // Reset internal filters in the header of the table
             const clonedHeader = window.rocketTable.table().header();
-            $(clonedHeader).find('input, select').val('');
-
-            // Reset additional filter elements outside the table
-            [
-                '#searchName',
-                // Add other filter selectors here if any
-            ].forEach(selector => {
-                $(selector).val('');
+            $(clonedHeader).find('input, select').each(function () {
+                $(this).val(''); // Clear the value
             });
 
-            // Reset entries per page to default
-            $('#showEntries').val('10');
+            // Reset custom filters outside of the DataTable
+            $('#searchName').val('').trigger('change'); // Specific IDs for your external filters
+
+            // Reset entries to the default value of 10
+            $('#showEntries').val('10').trigger('change');
             window.rocketTable.page.len(10).draw();
+
+            // Reset sorting to the default sorting (first column ascending)
+            window.rocketTable.order([0, 'asc']).draw();
         }
     });
 
-    // Handle changes in the show entries selector
-    $('#showEntries').on('change', function () {
-        const entries = $(this).val();
-        window.rocketTable.page.len(entries).draw();
+    // === SELECT ALL / DESELECT ALL ===
+
+    function updateColumnCheckboxes(columnClass, isChecked) {
+        $(`.${columnClass}`).each(function () {
+            $(this).prop('checked', isChecked);
+            $(this).attr('data-changed', 'true');
+            $(this).trigger('change'); // Trigger the change event
+            markChanged();
+        });
+    }
+
+    $('#selectAllMattShadow').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes('matt-shadow-checkbox', isChecked);
+    });
+
+    $('#selectAllMattPurified').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        updateColumnCheckboxes('matt-purified-checkbox', isChecked);
     });
 });

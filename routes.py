@@ -137,6 +137,9 @@ def init_routes(app, google):
     def save_all_changes():
         data = request.get_json()
 
+        # Debugging: Log the entire received JSON data
+        print("Received JSON data:", data)
+
         # Ensure data is received correctly
         if not data:
             return jsonify({'error': 'No JSON data provided'}), 400
@@ -154,11 +157,14 @@ def init_routes(app, google):
                     new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
                     db.session.add(new_note)  # Add a new note if none exists
 
-        # === Process Checkbox Data for Pokémon, Shiny Pokémon, and Costumes ===
+        # === Process Checkbox Data for Pokémon, Shiny Pokémon, Costumes, and Rocket Pokémon ===
         for checkbox in data.get('checkboxes', []):
-            entity_id = checkbox.get('shiny_id') or checkbox.get('pokemon_id') or checkbox.get('costume_id')
+            entity_id = checkbox.get('shiny_id') or checkbox.get('pokemon_id') or checkbox.get('costume_id') or checkbox.get('rocket_id')
             checkbox_type = checkbox.get('type')
             checked_value = checkbox.get('value') == 'Yes'
+
+            # Debugging: Log the entity being processed
+            print(f"Processing checkbox: entity_id={entity_id}, type={checkbox_type}, value={checked_value}")
 
             # Process checkboxes for Shiny Pokémon if type starts with "shiny_"
             if checkbox_type.startswith('shiny_'):
@@ -200,9 +206,22 @@ def init_routes(app, google):
                         costume.matt_shiny = checked_value
                     db.session.add(costume)
 
+            # Process checkboxes for Rocket Pokémon if type starts with "rocket_"
+            elif checkbox_type.startswith('rocket_'):
+                rocket_pokemon = Rocket.query.filter_by(id=entity_id).first()
+                if rocket_pokemon:
+                    if checkbox_type == 'rocket_matt_shadow':
+                        rocket_pokemon.matt_shadow = checked_value
+                    elif checkbox_type == 'rocket_matt_purified':
+                        rocket_pokemon.matt_purified = checked_value
+                    db.session.add(rocket_pokemon)
+                    # Debugging: Confirm update for Rocket Pokémon
+                    print(f"Updated Rocket Pokémon: id={rocket_pokemon.id}, matt_shadow={rocket_pokemon.matt_shadow}, matt_purified={rocket_pokemon.matt_purified}")
+
         # === Commit All Changes to the Database ===
         try:
             db.session.commit()
+            print("Changes committed successfully.")
             return jsonify({'message': 'Changes saved successfully'}), 200
         except Exception as e:
             db.session.rollback()
@@ -280,33 +299,35 @@ def init_routes(app, google):
                 print(f"Invalid dex_number format: {rocket_pokemon.dex_number}")
                 continue  # Skip if the dex_number isn't valid
 
-            # Initialize as 'No' for both columns
-            shadow_living_dex = 'No'
-            purified_living_dex = 'No'
+            # Initialize default values for Brady's shadow and purified columns
+            brady_shadow = 'No'
+            brady_purified = 'No'
 
-            # Query for shadow living dex (lucky = 0, favorite = 0, shadow_purified = 1)
-            shadow_entries = PokeGenieEntry.query.filter_by(
+            # Query for Brady's shadow dex (lucky = 0, favorite = 0, shadow_purified = 1)
+            brady_shadow_entries = PokeGenieEntry.query.filter_by(
                 pokemon_number=dex_number, lucky=0, favorite=0, shadow_purified=1
             ).all()
+            if brady_shadow_entries:
+                brady_shadow = 'Yes'  # Mark as 'Yes' if any entry matches the condition
 
-            if shadow_entries:
-                shadow_living_dex = 'Yes'  # Mark as 'Yes' if any entry matches the condition
-
-            # Query for purified living dex (lucky = 0, favorite = 0, shadow_purified = 2)
-            purified_entries = PokeGenieEntry.query.filter_by(
+            # Query for Brady's purified dex (lucky = 0, favorite = 0, shadow_purified = 2)
+            brady_purified_entries = PokeGenieEntry.query.filter_by(
                 pokemon_number=dex_number, lucky=0, favorite=0, shadow_purified=2
             ).all()
+            if brady_purified_entries:
+                brady_purified = 'Yes'  # Mark as 'Yes' if any entry matches the condition
 
-            if purified_entries:
-                purified_living_dex = 'Yes'  # Mark as 'Yes' if any entry matches the condition
-
-            # Append the updated data for display
+            # Append rocket data with all fields, including 'id'
+            print(f"Rocket Pokémon ID: {rocket_pokemon.id} Name: {rocket_pokemon.name}")
             updated_rocket_data.append({
+                'id': rocket_pokemon.id,
                 'dex_number': rocket_pokemon.dex_number,
                 'name': rocket_pokemon.name,
                 'method': rocket_pokemon.method,
-                'shadow_living_dex': shadow_living_dex,
-                'purified_living_dex': purified_living_dex
+                'brady_shadow': brady_shadow,
+                'brady_purified': brady_purified,
+                'matt_shadow': 'Yes' if rocket_pokemon.matt_shadow else 'No',
+                'matt_purified': 'Yes' if rocket_pokemon.matt_purified else 'No'
             })
 
         print("Updated Rocket Data: ", updated_rocket_data)
@@ -415,7 +436,7 @@ def init_routes(app, google):
             fetch_costume_pokemon_data()
         return redirect(url_for('costumes'))
 
-    # Update Rocket data route
+   # Update Rocket data route
     @app.route('/pogo/update-rocket', methods=['POST'])
     @requires_auth
     def update_rocket():

@@ -32,6 +32,13 @@
                 <button id="resetFiltersButton" class="btn btn-warning ml-2">Reset All</button>
             </div>
         </div>
+
+        <!-- Save Changes Button -->
+        <div class="col-md-4 d-flex justify-content-end">
+            {% if 'user' in session %}
+                <button id="saveAllChangesButton" class="btn btn-success btn-lg me-2">Save Changes</button>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Table for Rocket Pokémon -->
@@ -41,8 +48,16 @@
                 <tr>
                     <th>#</th>
                     <th>Name</th>
-                    <th>Shadow Living Dex</th>
-                    <th>Purified Living Dex</th>
+                    <th>Brady Shadow</th>
+                    <th>Brady Purified</th>
+                    <th>
+                        <div>Matt Shadow <span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMattShadow">
+                    </th>
+                    <th>
+                        <div>Matt Purified <span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMattPurified">
+                    </th>
                     <th>Method</th>
                 </tr>
             </thead>
@@ -51,8 +66,35 @@
                 <tr>
                     <td>{{ rocket_pokemon.dex_number }}</td>
                     <td>{{ rocket_pokemon.name }}</td>
-                    <td>{{ rocket_pokemon.shadow_living_dex }}</td>
-                    <td>{{ rocket_pokemon.purified_living_dex }}</td>
+
+                    <!-- Brady Shadow Logic (not a checkbox) -->
+                    <td data-filter="{{ 'Yes' if rocket_pokemon.brady_shadow == 'Yes' else 'No' }}">
+                        {{ rocket_pokemon.brady_shadow }}
+                    </td>
+
+                    <!-- Brady Purified Logic (not a checkbox) -->
+                    <td data-filter="{{ 'Yes' if rocket_pokemon.brady_purified == 'Yes' else 'No' }}">
+                        {{ rocket_pokemon.brady_purified }}
+                    </td>
+
+                    <!-- Matt Shadow Checkbox -->
+                    <td data-filter="{{ 'Yes' if rocket_pokemon.matt_shadow == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-shadow-checkbox" data-rocket-id="{{ rocket_pokemon.id }}" {% if rocket_pokemon.matt_shadow == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ rocket_pokemon.matt_shadow }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Matt Purified Checkbox -->
+                    <td data-filter="{{ 'Yes' if rocket_pokemon.matt_purified == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-purified-checkbox" data-rocket-id="{{ rocket_pokemon.id }}" {% if rocket_pokemon.matt_purified == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ rocket_pokemon.matt_purified }}
+                        {% endif %}
+                    </td>
+
                     <td>{{ rocket_pokemon.method }}</td>
                 </tr>
                 {% endfor %}

@@ -172,9 +172,19 @@ class Form(db.Model):
 class Rocket(db.Model):
     __tablename__ = 'rocket'
     id = db.Column(db.Integer, primary_key=True)
-    dex_number = db.Column(db.Integer)
-    name = db.Column(db.String(100))
-    method = db.Column(db.String(255))
+    dex_number = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    method = db.Column(db.String(255), nullable=True)
+
+    # Ownership tracking fields for Brady and Matt
+    brady_shadow = db.Column(db.Boolean, default=False)  # Formerly shadow_living_dex
+    brady_purified = db.Column(db.Boolean, default=False)  # Formerly purified_living_dex
+    matt_shadow = db.Column(db.Boolean, default=False)  # New column for Matt's shadow Pokémon
+    matt_purified = db.Column(db.Boolean, default=False)  # New column for Matt's purified Pokémon
+
+    __table_args__ = (
+        db.UniqueConstraint('dex_number', 'name', name='_dex_name_uc'),
+    )
 
     def __repr__(self):
         return f"<Rocket {self.dex_number} - {self.name}>"
