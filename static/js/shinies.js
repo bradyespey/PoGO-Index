@@ -200,6 +200,7 @@ $(document).ready(function () {
             });
         }
 
+        // Attach event handlers for extra filters
         if (options.extraFilters) {
             options.extraFilters.forEach(filter => {
                 $(filter.selector).on('keyup change clear', function () {

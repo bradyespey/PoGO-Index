@@ -62,8 +62,7 @@
                         <div>Matt 👤<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
                         <input type="checkbox" id="selectAllMattOwn">
                     </th>
-                    <th>Shiny Released</th>
-                    <th>Shiny Image</th>
+                    <th>Shiny</th>
                     <th>
                         <div>Brady ✨<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
                         <input type="checkbox" id="selectAllBradyShiny">
@@ -107,9 +106,6 @@
                             {{ costume.matt_own }}
                         {% endif %}
                     </td>
-
-                    <!-- Shiny Released -->
-                    <td>{{ 'Yes' if costume.shiny_released else 'No' }}</td>
 
                     <!-- Display Shiny Image -->
                     <td data-search="{{ 'Has Image' if costume.shiny_image_url else 'No Image' }}">

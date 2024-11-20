@@ -95,19 +95,18 @@ $(document).ready(function () {
     // Apply filter settings for DataTable columns
     function applyFilter(dataTable, filter, value) {
         const columnIndex = filter.columnIndex;
-
-        if (filter.type === 'select') {
+        if (filter.type === 'text') {
+            dataTable.column(columnIndex).search(value).draw();
+        } else if (filter.type === 'numberExact') {
+            dataTable.column(columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
+        } else if (filter.type === 'select') {
             if (value) {
                 dataTable.column(columnIndex)
                     .search('^' + $.fn.dataTable.util.escapeRegex(value.trim()) + '$', true, false)
                     .draw();
             } else {
-                dataTable.column(columnIndex).search('', true, false).draw();
+                dataTable.column(columnIndex).search('').draw();
             }
-        } else if (filter.type === 'numberExact') {
-            dataTable.column(columnIndex).search(value ? '^' + value + '$' : '', true, false).draw();
-        } else {
-            dataTable.column(columnIndex).search(value).draw();
         }
     }
 
@@ -117,7 +116,7 @@ $(document).ready(function () {
             const column = options.columns[i];
             const title = column.title || '';
             const filterType = column.filterType;
-
+    
             if (filterType === 'text') {
                 $(this).html('<input type="text" placeholder="Search ' + title + '" />');
             } else if (filterType === 'numberExact') {
@@ -130,9 +129,9 @@ $(document).ready(function () {
                 selectHtml += '</select>';
                 $(this).html(selectHtml);
             } else {
-                $(this).html(''); // No filter for columns without specified filterType
+                $(this).html(''); // No filter for columns without a specified filterType
             }
-
+    
             // Attach event listeners to filter inputs
             $('input', this).on('keyup change clear', function () {
                 const val = this.value;
@@ -142,17 +141,13 @@ $(document).ready(function () {
                     dataTable.column(i).search(val).draw();
                 }
             });
-
+    
             $('select', this).on('change', function () {
                 const val = $(this).val();
-                if (column.specialFilter) {
-                    column.specialFilter(dataTable.column(i), val);
+                if (val) {
+                    dataTable.column(i).search('^' + $.fn.dataTable.util.escapeRegex(val) + '$', true, false).draw();
                 } else {
-                    if (val) {
-                        dataTable.column(i).search('^' + $.fn.dataTable.util.escapeRegex(val) + '$', true, false).draw();
-                    } else {
-                        dataTable.column(i).search('', true, false).draw();
-                    }
+                    dataTable.column(i).search('').draw();
                 }
             });
         });
@@ -169,28 +164,25 @@ $(document).ready(function () {
 
     // Function to adjust columns after images have loaded
     function adjustColumnsWhenImagesLoaded() {
-        var images = $('#costumesTable').find('img');
-        var totalImages = images.length;
-        var imagesLoaded = 0;
-
+        const images = $('#costumesTable').find('img');
+        const totalImages = images.length;
+        let imagesLoaded = 0;
+    
         if (totalImages === 0) {
-            // No images, adjust columns immediately
             window.costumesTable.columns.adjust();
             return;
         }
-
+    
         images.each(function () {
             if (this.complete) {
                 imagesLoaded++;
                 if (imagesLoaded === totalImages) {
-                    // All images have loaded (including cached images)
                     window.costumesTable.columns.adjust();
                 }
             } else {
                 $(this).on('load error', function () {
                     imagesLoaded++;
                     if (imagesLoaded === totalImages) {
-                        // All images have loaded or errored
                         window.costumesTable.columns.adjust();
                     }
                 });
@@ -204,27 +196,24 @@ $(document).ready(function () {
         const table = $(tableSelector);
         if (table.length === 0) return null;
     
-        // Remove any previous cloned headers to prevent duplicates
+        // Remove any previously cloned headers to prevent duplication
         table.find('thead tr.clone-header').remove();
-        
-        // Clone the header row if it doesn't already exist
+    
         const originalHeader = table.find('thead tr').first();
-        const clonedHeader = originalHeader.clone(true)
-                            .addClass('clone-header')
-                            .appendTo(table.find('thead'));
+        const clonedHeader = originalHeader.clone(true).addClass('clone-header').appendTo(table.find('thead'));
     
         const dataTable = table.DataTable({
-            scrollX: true,          // Enable horizontal scrolling
-            responsive: false,      // Disable responsive behavior
-            orderCellsTop: false,   // Disable orderCellsTop to fix Select All issues
+            scrollX: true,
+            responsive: false,
+            orderCellsTop: true,
             fixedHeader: true,
-            paging: options.paging !== false,
-            pageLength: options.pageLength || 10,
-            lengthMenu: options.lengthMenu || [10, 25, 50, 100, -1],
+            paging: options.paging,
+            pageLength: options.pageLength,
+            lengthMenu: options.lengthMenu,
             stateSave: false,
-            searching: options.searching !== false,
-            lengthChange: options.lengthChange !== false,
-            columnDefs: options.columnDefs || [],
+            searching: options.searching,
+            lengthChange: options.lengthChange,
+            columnDefs: options.columnDefs,
             stateSaveParams: (settings, data) => { data.search.search = ''; },
             initComplete: function () {
                 const api = this.api();
@@ -241,6 +230,7 @@ $(document).ready(function () {
             });
         }
     
+        // Attach event handlers for extra filters
         if (options.extraFilters) {
             options.extraFilters.forEach(filter => {
                 $(filter.selector).on('keyup change clear', function () {
@@ -270,7 +260,7 @@ $(document).ready(function () {
             { 
                 title: 'Image', 
                 filterType: 'select', 
-                options: ['All', 'Has Image', 'No Image'],
+                options: ['Has Image', 'No Image'],
                 specialFilter: applyImageFilter
             },
             // Brady 👤 column                                     // Column 4
@@ -300,16 +290,14 @@ $(document).ready(function () {
                     return data;
                 }
             },
-            // Shiny Released column                              // Column 6
-            { title: 'Shiny Released', filterType: 'select', options: ['Yes', 'No'] },
-            // Shiny Image column with custom filter              // Column 7
+            // Shiny Image column with custom filter              // Column 6
             { 
-                title: 'Shiny Image', 
+                title: 'Shiny', 
                 filterType: 'select', 
-                options: ['All', 'Has Image', 'No Image'],
+                options: ['Has Image', 'No Image'],
                 specialFilter: applyImageFilter
             },
-            // Brady ✨ column                                     // Column 8
+            // Brady ✨ column                                     // Column 7
             { 
                 title: 'Brady ✨', 
                 filterType: 'select', 
@@ -322,7 +310,7 @@ $(document).ready(function () {
                     return data;
                 }
             },
-            // Matt ✨ column                                      // Column 9
+            // Matt ✨ column                                      // Column 8
             { 
                 title: 'Matt ✨', 
                 filterType: 'select', 

@@ -140,7 +140,6 @@ class Costume(db.Model):
     name = db.Column(db.String(100), nullable=False)
     costume = db.Column(db.String(100), nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
-    shiny_released = db.Column(db.Boolean, default=False)
     shiny_image_url = db.Column(db.String(255), nullable=True)
 
     # Ownership tracking fields for Brady and Matt

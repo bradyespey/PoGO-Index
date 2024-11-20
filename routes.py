@@ -270,7 +270,6 @@ def init_routes(app, google):
                 'name': costume.name,
                 'costume': costume.costume,
                 'image_url': costume.image_url,
-                'shiny_released': 'Yes' if costume.shiny_released else 'No',
                 'shiny_image_url': costume.shiny_image_url,
                 'brady_own': 'Yes' if costume.brady_own else 'No',
                 'matt_own': 'Yes' if costume.matt_own else 'No',

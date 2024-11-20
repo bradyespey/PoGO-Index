@@ -41,13 +41,18 @@ def parse_event_pokemon(html):
     """Parse the HTML and extract event Pokémon costume data, including images."""
     soup = BeautifulSoup(html, 'html.parser')
     parsed_data = {}
-
-    # Find all tabs (Regular and Shiny)
+    
+    # Find all tabs (Regular, Shiny, and Extra Forms)
     tabs = soup.find_all("div", class_="wds-tab__content")
-
-    # The first tab is for Regular Pokémon, the second for Shiny
+    
+    # Iterate over all tabs
     for idx, tab in enumerate(tabs):
-        shiny = idx == 1  # If index is 1, it's the Shiny tab
+        # Determine if this tab is for shiny Pokémon based on index or some other attribute
+        # For simplicity, let's assume:
+        # idx == 0: Regular
+        # idx == 1: Shiny
+        # idx >= 2: Extra Forms (Shiny)
+        shiny = idx != 0  # All tabs except the first are for shiny Pokémon
 
         # Find all costume Pokémon in this tab
         items = tab.find_all("div", class_="pogo-list-item")
@@ -68,12 +73,44 @@ def parse_event_pokemon(html):
 
             # Extract costume/form
             form_tag = item.find("div", class_="pogo-list-item-form")
-            costume = form_tag.get_text(strip=True) if form_tag else "Unknown"
+            costume = form_tag.get_text(strip=True) if form_tag else None
 
-            # Use a key to uniquely identify each costume Pokémon
+            # Extract images
+            image_url = None
+            shiny_image_url = None
+
+            # Extract image divs
+            image_div_r = item.find("div", class_="pogo-list-item-image-r")
+            image_div_s = item.find("div", class_="pogo-list-item-image-s")
+
+            # For regular entries
+            if not shiny:
+                if image_div_r:
+                    img_tag = image_div_r.find("img")
+                    if img_tag:
+                        image_url = img_tag.get("data-src") or img_tag.get("src")
+                        if image_url:
+                            image_url = image_url.split('?')[0].split('/revision/')[0]
+            else:
+                # For shiny entries
+                if image_div_r:
+                    img_tag = image_div_r.find("img")
+                    if img_tag:
+                        shiny_image_url = img_tag.get("data-src") or img_tag.get("src")
+                        if shiny_image_url:
+                            shiny_image_url = shiny_image_url.split('?')[0].split('/revision/')[0]
+                elif image_div_s:
+                    img_tag = image_div_s.find("img")
+                    if img_tag:
+                        shiny_image_url = img_tag.get("data-src") or img_tag.get("src")
+                        if shiny_image_url:
+                            shiny_image_url = shiny_image_url.split('?')[0].split('/revision/')[0]
+
+            if dex_number is None or name == "Unknown":
+                continue
+
             key = (dex_number, name, costume)
 
-            # Initialize the entry if it doesn't exist
             if key not in parsed_data:
                 parsed_data[key] = {
                     "dex_number": dex_number,
@@ -81,25 +118,15 @@ def parse_event_pokemon(html):
                     "costume": costume,
                     "image_url": None,
                     "shiny_image_url": None,
-                    "shiny_released": False  # Assume not shiny until found in shiny tab
                 }
 
-            # Find the costumed image within 'pogo-list-item-image-r'
-            image_div = item.find("div", class_="pogo-list-item-image-r")
-            if image_div:
-                img_tag = image_div.find("img")
-                if img_tag:
-                    image_url = img_tag.get("data-src") or img_tag.get("src")
-                    if image_url:
-                        # Clean up the URL
-                        image_url = image_url.split('?')[0].split('/revision/')[0]
-                        if shiny:
-                            parsed_data[key]["shiny_image_url"] = image_url
-                            parsed_data[key]["shiny_released"] = True
-                            print(f"Found shiny image for {name} (Dex #{dex_number}, Costume: {costume}): {image_url}")
-                        else:
-                            parsed_data[key]["image_url"] = image_url
-                            print(f"Found regular image for {name} (Dex #{dex_number}, Costume: {costume}): {image_url}")
+            # Update the appropriate image URLs
+            if not shiny:
+                if image_url:
+                    parsed_data[key]["image_url"] = image_url
+            else:
+                if shiny_image_url:
+                    parsed_data[key]["shiny_image_url"] = shiny_image_url
 
     return list(parsed_data.values())
 
@@ -133,9 +160,6 @@ def update_database(costumes_data):
                 if existing_costume.shiny_image_url != costume_data.get("shiny_image_url"):
                     existing_costume.shiny_image_url = costume_data.get("shiny_image_url")
                     updated_fields.append("shiny_image_url")
-                if existing_costume.shiny_released != costume_data.get("shiny_released"):
-                    existing_costume.shiny_released = costume_data.get("shiny_released")
-                    updated_fields.append("shiny_released")
 
                 # Commit changes if any fields were updated
                 if updated_fields:
@@ -153,7 +177,6 @@ def update_database(costumes_data):
                     costume=costume,
                     image_url=costume_data.get("image_url"),
                     shiny_image_url=costume_data.get("shiny_image_url"),
-                    shiny_released=costume_data.get("shiny_released"),
                     brady_own=False,
                     brady_shiny=False,
                     matt_own=False,
