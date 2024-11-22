@@ -1,9 +1,9 @@
+# Import necessary libraries and modules
 import os
 import sys
 from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
-import time
 
 # Add the project root directory to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -94,6 +94,7 @@ def fetch_pokemon_data():
                 type=type_,
                 image_url=image_url_to_store,
                 user_1_living_dex=False,
+                user_1_shiny=False,  # NEW COLUMN DEFAULT VALUE
                 user_1_lucky=False,
                 user_2_living_dex=False,
                 user_2_lucky=False,
@@ -112,6 +113,7 @@ def fetch_pokemon_data():
 
         # Default fields as specified
         pokemon.user_1_living_dex = False
+        pokemon.user_1_shiny = False  # Reset Brady's shiny column
         pokemon.user_1_lucky = False
         pokemon.user_0_living_dex = True
 
@@ -127,6 +129,10 @@ def fetch_pokemon_data():
             # Brady's Living Dex logic
             if entry.lucky == 0 and entry.shadow_purified == 0 and (entry.favorite == 0 or entry.favorite == 4):
                 pokemon.user_1_living_dex = True
+
+            # Brady's Shiny Dex logic (NEW LOGIC)
+            if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 1:
+                pokemon.user_1_shiny = True
 
             # Brady's Lucky Dex logic
             if entry.lucky == 1 and entry.shadow_purified == 0 and entry.favorite == 0:

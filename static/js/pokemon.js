@@ -16,8 +16,24 @@ $(document).ready(function () {
         console.log("Change detected, hasChanges set to:", hasChanges); // Debug log
     }
 
-    // Attach change event listeners to all checkboxes
-    $(document).on('change', '.matt-have-checkbox, .matt-lucky-checkbox, .ipad-lucky-checkbox', function() {
+    // Attach change event listeners to specific checkbox classes only
+    $(document).on('change', '.matt-have-checkbox', function () {
+        console.log("Matt Have checkbox changed"); // Debug
+        markChanged();
+        $(this).attr('data-changed', 'true'); // Mark as changed
+        const isChecked = $(this).is(':checked') ? 'Yes' : 'No';
+        $(this).closest('td').attr('data-filter', isChecked);
+    });
+
+    $(document).on('change', '.matt-lucky-checkbox', function () {
+        console.log("Matt Lucky checkbox changed"); // Debug
+        markChanged();
+        $(this).attr('data-changed', 'true'); // Mark as changed
+        const isChecked = $(this).is(':checked') ? 'Yes' : 'No';
+        $(this).closest('td').attr('data-filter', isChecked);
+    });
+
+    $(document).on('change', '.ipad-lucky-checkbox', function () {
         markChanged();
         $(this).attr('data-changed', 'true'); // Mark as changed
 
@@ -33,35 +49,70 @@ $(document).ready(function () {
     });
 
     // Track changes on "Select All" checkboxes
-    $('#selectAllMatt, #selectAllMattLucky, #selectAlliPadLucky').on('change', function() {
+    $('#selectAllMatt, #selectAllMattLucky, #selectAlliPadLucky').on('change', function () {
         const isChecked = $(this).is(':checked');
-        const columnIndex = $(this).attr('id') === 'selectAllMatt' ? 6
-                        : $(this).attr('id') === 'selectAllMattLucky' ? 7
-                        : 9;  // Adjust based on actual column indexes
-
-        updateColumnCheckboxes(columnIndex, isChecked);
+        let columnIndex;
+    
+        // Explicitly map each checkbox by ID
+        if (this.id === 'selectAllMatt') {
+            columnIndex = 7; // Matt 👤 column index
+            console.log("Select All Matt triggered. isChecked:", isChecked);
+        } else if (this.id === 'selectAllMattLucky') {
+            columnIndex = 8; // Matt 🎲 column index
+            console.log("Select All Matt Lucky triggered. isChecked:", isChecked);
+        } else if (this.id === 'selectAlliPadLucky') {
+            columnIndex = 10; // iPad 🎲 column index
+            console.log("Select All iPad Lucky triggered. isChecked:", isChecked);
+        }
+    
+        // If columnIndex is correctly determined, update only the relevant column
+        if (columnIndex !== undefined) {
+            updateColumnCheckboxes(columnIndex, isChecked);
+        }
     });
 
     // Update all checkboxes in a column when "Select All" is toggled
     function updateColumnCheckboxes(columnIndex, isChecked) {
         const table = window.pokemonTable;
-
+        const checkboxClass = getCheckboxClassByColumnIndex(columnIndex);
+    
+        console.log(`Updating columnIndex: ${columnIndex}, isChecked: ${isChecked}, class: ${checkboxClass}`); // Debug log
+    
         table.rows({ page: 'current' }).every(function () {
             const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
-            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
-
-            if ($checkbox.length) {
-                // Set checkbox state
-                $checkbox.prop('checked', isChecked);
-
-                // Update the `data-filter` attribute in the cell
-                const filterValue = isChecked ? 'Yes' : 'No';
-                $checkboxCell.attr('data-filter', filterValue);
-
-                // Trigger the change event
-                $checkbox.trigger('change');
+            const $checkbox = $checkboxCell.find(`input.${checkboxClass}`);
+            if (!$checkbox.length) {
+                console.warn(`No checkbox found for class: ${checkboxClass}, columnIndex: ${columnIndex}`);
+                return; // Exit if no matching checkbox
             }
+    
+            console.log(`Processing checkbox in columnIndex: ${columnIndex}, row: ${this.index()}, isChecked: ${isChecked}`);
+            $checkbox
+                .off('change') // Temporarily suppress change event
+                .prop('checked', isChecked) // Check/uncheck the checkbox
+                .attr('data-filter', isChecked ? 'Yes' : 'No') // Update the filter attribute
+                .attr('data-changed', 'true'); // Mark as changed
+
+            console.log(
+                `Processing checkbox in columnIndex: ${columnIndex}, row: ${this.index()}, isChecked: ${isChecked}, data-changed: true`
+            );
+
+            // Rebind the change event listener to ensure future manual changes are captured
+            $checkbox.on('change', function () {
+                markChanged();
+                $(this).attr('data-changed', 'true');
+            });
+            $checkbox.trigger('change');
         });
+    }
+    
+    // Helper function to map column indices to the correct checkbox class
+    function getCheckboxClassByColumnIndex(columnIndex) {
+        if (columnIndex === 7) return 'matt-have-checkbox'; // Matt 👤
+        if (columnIndex === 8) return 'matt-lucky-checkbox'; // Matt 🎲
+        if (columnIndex === 10) return 'ipad-lucky-checkbox'; // iPad 🎲
+        console.warn(`Invalid columnIndex: ${columnIndex}`);
+        return ''; // Default to no class
     }
 
     // Collect changes from notes and checkboxes to send to the backend
@@ -82,11 +133,13 @@ $(document).ready(function () {
         $('.matt-have-checkbox[data-changed], .matt-lucky-checkbox[data-changed], .ipad-lucky-checkbox[data-changed]').each(function () {
             const pokemonId = $(this).data('pokemon-id');
             let checkboxType;
+    
             if ($(this).hasClass('matt-have-checkbox')) checkboxType = 'matt_have';
             else if ($(this).hasClass('matt-lucky-checkbox')) checkboxType = 'matt_lucky';
             else if ($(this).hasClass('ipad-lucky-checkbox')) checkboxType = 'ipad_lucky';
     
             const checkedValue = $(this).is(':checked') ? 'Yes' : 'No';
+    
             if (pokemonId !== undefined && checkboxType !== undefined) {
                 checkboxesData.push({
                     pokemon_id: pokemonId,
@@ -96,8 +149,9 @@ $(document).ready(function () {
             }
         });
     
+        console.log("Collected changes:", { notes: notesData, checkboxes: checkboxesData }); // Debug log
         return { notes: notesData, checkboxes: checkboxesData };
-    }    
+    }
 
     // Save changes when "Save Changes" button is clicked
     $('#saveAllChangesButton').on('click', function () {
@@ -105,10 +159,15 @@ $(document).ready(function () {
             alert("No changes to save!");
             return;
         }
-
+    
         const changes = collectChanges();
-        console.log("Changes being sent to backend:", changes);
-
+        console.log("Changes being sent to backend:", changes); // Debug log
+    
+        if (changes.checkboxes.length === 0 && changes.notes.length === 0) {
+            alert("No changes to save!");
+            return;
+        }
+    
         $.ajax({
             url: '/pogo/save-all-changes',
             method: 'POST',
@@ -117,10 +176,10 @@ $(document).ready(function () {
             success: function () {
                 alert('Changes saved successfully!');
                 hasChanges = false;
-            
+                
                 // Update the DataTable to reflect changes
                 updateDataTableAfterChanges();
-            
+                
                 console.log("Changes saved, hasChanges reset to:", hasChanges);
             },
             error: function () {
@@ -295,6 +354,7 @@ $(document).ready(function () {
             { title: 'Name', filterType: 'text' },
             { title: 'Type', filterType: 'select', options: ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flying', 'Ghost', 'Grass', 'Ground', 'Ice', 'Poison', 'Psychic', 'Rock', 'Steel', 'Water'] },
             { title: 'Brady 👤', filterType: 'select', options: ['Yes', 'No'] },
+            { title: 'Brady ✨', filterType: 'select', options: ['Yes', 'No'] }, // New column for Brady ✨
             { title: 'Brady 🎲', filterType: 'select', options: ['Yes', 'No'] },
             { 
                 title: 'Matt 👤', 
@@ -355,10 +415,10 @@ $(document).ready(function () {
         extraFilters: [
             { selector: '#searchName', columnIndex: 2, type: 'text' },
             { selector: '#filterType', columnIndex: 3, type: 'select' },
-            { selector: '#filterLegendary', columnIndex: 11, type: 'select' },
-            { selector: '#filterMythical', columnIndex: 12, type: 'select' },
-            { selector: '#filterUltraBeast', columnIndex: 13, type: 'select' }
-        ]    
+            { selector: '#filterLegendary', columnIndex: 12, type: 'select' },
+            { selector: '#filterMythical', columnIndex: 13, type: 'select' },
+            { selector: '#filterUltraBeast', columnIndex: 14, type: 'select' }
+        ]
     });
 
     // === CUSTOM SEARCH FUNCTION TO HANDLE HIDDEN COLUMNS ===
@@ -368,9 +428,9 @@ $(document).ready(function () {
         const mythicalFilter = $('#filterMythical').val();
         const ultraBeastFilter = $('#filterUltraBeast').val();
     
-        const legendaryValue = data[11]; // Hidden Legendary column
-        const mythicalValue = data[12];  // Hidden Mythical column
-        const ultraBeastValue = data[13]; // Hidden Ultra Beast column
+        const legendaryValue = data[12]; // Hidden Legendary column
+        const mythicalValue = data[13];  // Hidden Mythical column
+        const ultraBeastValue = data[14]; // Hidden Ultra Beast column
     
         // Check Legendary filter
         if (legendaryFilter && legendaryFilter !== legendaryValue) {
@@ -402,49 +462,73 @@ $(document).ready(function () {
     // Function to update checkboxes in a column when "Select All" is used
     function updateColumnCheckboxes(columnIndex, isChecked) {
         const table = window.pokemonTable;
-
+        const checkboxClass = getCheckboxClassByColumnIndex(columnIndex);
+    
+        console.log(`Updating columnIndex: ${columnIndex}, isChecked: ${isChecked}, class: ${checkboxClass}`); // Debug log
+    
         table.rows({ page: 'current' }).every(function () {
             const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
-            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
-
-            if ($checkbox.length) {
-                // Set checkbox state to match "Select All" checkbox
-                $checkbox.prop('checked', isChecked);
-
-                // Mark the checkbox as changed and set data-filter attribute
-                $checkbox.attr('data-changed', 'true').trigger('change');
-                $checkboxCell.attr('data-filter', isChecked ? 'Yes' : 'No');
-                markChanged(); // Track that changes were made
+            const $checkbox = $checkboxCell.find(`input.${checkboxClass}`);
+            if (!$checkbox.length) {
+                console.warn(`No checkbox found for class: ${checkboxClass}, columnIndex: ${columnIndex}`);
+                return; // Exit if no matching checkbox
             }
+    
+            console.log(`Processing checkbox in columnIndex: ${columnIndex}, row: ${this.index()}, isChecked: ${isChecked}`);
+            
+            // Apply changes and mark checkbox as changed
+            $checkbox
+                .off('change') // Temporarily suppress change event
+                .prop('checked', isChecked) // Check/uncheck the checkbox
+                .attr('data-filter', isChecked ? 'Yes' : 'No') // Update the filter attribute
+                .attr('data-changed', 'true'); // Mark as changed
+            
+            console.log(`Checkbox updated: row ${this.index()}, columnIndex ${columnIndex}, data-changed set to true`);
+    
+            // Rebind the change event listener
+            $checkbox.on('change', function () {
+                markChanged();
+                $(this).attr('data-changed', 'true');
+            });
+    
+            // Trigger change event programmatically
+            $checkbox.trigger('change');
         });
     }
 
-   // Event listeners for header checkboxes
-   $('#selectAllMatt').on('change', function () {
+    // Event listeners for "Select All" checkboxes
+    $('#selectAllMatt').on('change', function () {
         const isChecked = $(this).is(':checked');
-        updateColumnCheckboxes(6, isChecked); // Update all checkboxes in Matt column
+        console.log("Select All Matt triggered. isChecked:", isChecked); // Debug
+        updateColumnCheckboxes(7, isChecked); // Matt 👤 column index
     });
-
+    
     $('#selectAllMattLucky').on('change', function () {
         const isChecked = $(this).is(':checked');
-        updateColumnCheckboxes(7, isChecked); // Update all checkboxes in Matt Lucky column
+        console.log("Select All Matt Lucky triggered. isChecked:", isChecked); // Debug
+        console.trace(); // To trace where this event originates
+        updateColumnCheckboxes(8, isChecked); // Matt 🎲 column index
     });
-
+    
     $('#selectAlliPadLucky').on('change', function () {
         const isChecked = $(this).is(':checked');
-        updateColumnCheckboxes(9, isChecked); // Update all checkboxes in iPad Lucky column
+        console.log("Select All iPad Lucky triggered. isChecked:", isChecked); // Debug
+        updateColumnCheckboxes(10, isChecked); // iPad 🎲 column index
     });
+
+    // === UPDATE HEADER CHECKBOX STATE ===
 
     // Ensure the header checkbox is updated based on row checkbox states
     function updateHeaderCheckboxState(columnIndex, headerCheckboxId) {
         const table = window.pokemonTable;
+        const checkboxClass = getCheckboxClassByColumnIndex(columnIndex); // Resolve class by columnIndex
         let allChecked = true;
         let anyChecked = false;
-
+    
         table.rows({ page: 'current' }).every(function () {
             const $checkboxCell = $(this.node()).find('td').eq(columnIndex);
-            const $checkbox = $checkboxCell.find('input[type="checkbox"]');
-
+            const $checkbox = $checkboxCell.find(`input.${checkboxClass}`); // Target only the column's checkboxes
+    
             if ($checkbox.length) {
                 if ($checkbox.is(':checked')) {
                     anyChecked = true;
@@ -453,28 +537,32 @@ $(document).ready(function () {
                 }
             }
         });
-
+    
         const $headerCheckbox = $('#' + headerCheckboxId);
+        console.log(`Updating header checkbox state for columnIndex: ${columnIndex}, allChecked: ${allChecked}, anyChecked: ${anyChecked}`);
         $headerCheckbox.prop('checked', allChecked);
         $headerCheckbox.prop('indeterminate', !allChecked && anyChecked);
     }
 
+    // Update header checkbox state on table redraw
+    window.pokemonTable.on('draw', function () {
+        updateHeaderCheckboxState(7, 'selectAllMatt'); // Matt 👤
+        updateHeaderCheckboxState(8, 'selectAllMattLucky'); // Matt 🎲
+        updateHeaderCheckboxState(10, 'selectAlliPadLucky'); // iPad 🎲
+    });
+
     // Event listeners for individual checkboxes to update header checkbox state
     window.pokemonTable.on('draw', function () {
-        updateHeaderCheckboxState(6, 'selectAllMatt');
-        updateHeaderCheckboxState(7, 'selectAllMattLucky');
-        updateHeaderCheckboxState(9, 'selectAlliPadLucky');
-
         $('input.matt-have-checkbox').off('change').on('change', function () {
-            updateHeaderCheckboxState(6, 'selectAllMatt');
+            updateHeaderCheckboxState(7, 'selectAllMatt'); // Matt 👤
         });
 
         $('input.matt-lucky-checkbox').off('change').on('change', function () {
-            updateHeaderCheckboxState(7, 'selectAllMattLucky');
+            updateHeaderCheckboxState(8, 'selectAllMattLucky'); // Matt 🎲
         });
 
         $('input.ipad-lucky-checkbox').off('change').on('change', function () {
-            updateHeaderCheckboxState(9, 'selectAlliPadLucky');
+            updateHeaderCheckboxState(10, 'selectAlliPadLucky'); // iPad 🎲
         });
     });
 

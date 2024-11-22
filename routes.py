@@ -87,6 +87,7 @@ def init_routes(app, google):
         for pokemon in pokemon_list:
             # Use the existing user-specific dex fields from the updated model
             brady_living_dex = 'Yes' if pokemon.user_1_living_dex else 'No'
+            brady_shiny_dex = 'Yes' if pokemon.user_1_shiny else 'No'  # NEW COLUMN LOGIC
             brady_lucky_dex = 'Yes' if pokemon.user_1_lucky else 'No'
             need_on_ipad = 'Yes' if pokemon.user_0_living_dex else 'No'
             ipad_lucky_dex = 'Yes' if pokemon.user_0_lucky else 'No'
@@ -119,6 +120,7 @@ def init_routes(app, google):
                 'type': pokemon.type,
                 'image_url': pokemon.image_url,
                 'brady_living_dex': brady_living_dex,
+                'brady_shiny_dex': brady_shiny_dex,  # NEW COLUMN LOGIC
                 'brady_lucky_dex': brady_lucky_dex,
                 'matt_have': matt_have,
                 'matt_lucky': matt_lucky,

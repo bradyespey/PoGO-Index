@@ -21,13 +21,14 @@ class User(db.Model):
 class Pokemon(db.Model):
     __tablename__ = 'pokemon'
     id = db.Column(db.Integer, primary_key=True)
-    dex_number = db.Column(db.Integer, unique=True, nullable=False)  # Add this line
+    dex_number = db.Column(db.Integer, unique=True, nullable=False)
     name = db.Column(db.String(100))
     type = db.Column(db.String(50))
     image_url = db.Column(db.String(255))
 
     # Ownership fields for each user (Brady, Matt, iPad)
     user_1_living_dex = db.Column(db.Boolean, default=False)  # Brady's Living Dex
+    user_1_shiny = db.Column(db.Boolean, default=False)  # NEW COLUMN: Brady's Shiny Dex
     user_1_lucky = db.Column(db.Boolean, default=False)  # Brady's Lucky Dex
     user_2_living_dex = db.Column(db.Boolean, default=False)  # Matt's Living Dex
     user_2_lucky = db.Column(db.Boolean, default=False)  # Matt's Lucky Dex
