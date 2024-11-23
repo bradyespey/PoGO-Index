@@ -87,14 +87,16 @@ def init_routes(app, google):
         for pokemon in pokemon_list:
             # Use the existing user-specific dex fields from the updated model
             brady_living_dex = 'Yes' if pokemon.user_1_living_dex else 'No'
-            brady_shiny_dex = 'Yes' if pokemon.user_1_shiny else 'No'  # NEW COLUMN LOGIC
+            brady_shiny_dex = 'Yes' if pokemon.user_1_shiny else 'No'
             brady_lucky_dex = 'Yes' if pokemon.user_1_lucky else 'No'
             need_on_ipad = 'Yes' if pokemon.user_0_living_dex else 'No'
             ipad_lucky_dex = 'Yes' if pokemon.user_0_lucky else 'No'
+            ipad_shiny_dex = 'Yes' if pokemon.user_0_shiny else 'No'  # NEW COLUMN LOGIC
 
             # Matt's Have Living Dex Logic (user_2_living_dex is used now)
             matt_have = 'Yes' if pokemon.user_2_living_dex else 'No'
             matt_lucky = 'Yes' if pokemon.user_2_lucky else 'No'
+            matt_shiny = 'Yes' if pokemon.user_2_shiny else 'No'  # NEW COLUMN LOGIC
 
             # Fetch category from AllPokemon
             category = dex_to_category.get(pokemon.dex_number)
@@ -120,12 +122,14 @@ def init_routes(app, google):
                 'type': pokemon.type,
                 'image_url': pokemon.image_url,
                 'brady_living_dex': brady_living_dex,
-                'brady_shiny_dex': brady_shiny_dex,  # NEW COLUMN LOGIC
+                'brady_shiny_dex': brady_shiny_dex,
                 'brady_lucky_dex': brady_lucky_dex,
                 'matt_have': matt_have,
                 'matt_lucky': matt_lucky,
+                'matt_shiny': matt_shiny,  # NEW COLUMN LOGIC
                 'need_on_ipad': need_on_ipad,
                 'ipad_lucky_dex': ipad_lucky_dex,
+                'ipad_shiny_dex': ipad_shiny_dex,  # NEW COLUMN LOGIC
                 'note_text': note_text,
                 'legendary': legendary,
                 'mythical': mythical,
@@ -159,7 +163,7 @@ def init_routes(app, google):
                     new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
                     db.session.add(new_note)  # Add a new note if none exists
 
-        # === Process Checkbox Data for Pokémon, Shiny Pokémon, Costumes, and Rocket Pokémon ===
+        # === Process Checkbox Data ===
         for checkbox in data.get('checkboxes', []):
             entity_id = checkbox.get('shiny_id') or checkbox.get('pokemon_id') or checkbox.get('costume_id') or checkbox.get('rocket_id')
             checkbox_type = checkbox.get('type')
@@ -168,7 +172,7 @@ def init_routes(app, google):
             # Debugging: Log the entity being processed
             print(f"Processing checkbox: entity_id={entity_id}, type={checkbox_type}, value={checked_value}")
 
-            # Process checkboxes for Shiny Pokémon if type starts with "shiny_"
+            # Process checkboxes for Shiny Pokémon
             if checkbox_type.startswith('shiny_'):
                 shiny_pokemon = ShinyPokemon.query.filter_by(id=entity_id).first()
                 if shiny_pokemon:
@@ -183,7 +187,7 @@ def init_routes(app, google):
                     db.session.add(shiny_pokemon)
 
             # Process checkboxes for normal Pokémon
-            elif checkbox_type in ['matt_lucky', 'matt_have', 'ipad_lucky']:
+            elif checkbox_type in ['matt_lucky', 'matt_have', 'ipad_lucky', 'matt_shiny', 'ipad_shiny']:  # Added new types
                 pokemon = Pokemon.query.filter_by(id=entity_id).first()
                 if pokemon:
                     if checkbox_type == 'matt_lucky':
@@ -192,9 +196,13 @@ def init_routes(app, google):
                         pokemon.user_2_living_dex = checked_value
                     elif checkbox_type == 'ipad_lucky':
                         pokemon.user_0_lucky = checked_value
+                    elif checkbox_type == 'matt_shiny':  # New column
+                        pokemon.user_2_shiny = checked_value
+                    elif checkbox_type == 'ipad_shiny':  # New column
+                        pokemon.user_0_shiny = checked_value
                     db.session.add(pokemon)
 
-            # Process checkboxes for Costumes if type starts with "costume_"
+            # Process checkboxes for Costumes
             elif checkbox_type.startswith('costume_'):
                 costume = Costume.query.filter_by(id=entity_id).first()
                 if costume:
@@ -208,7 +216,7 @@ def init_routes(app, google):
                         costume.matt_shiny = checked_value
                     db.session.add(costume)
 
-            # Process checkboxes for Rocket Pokémon if type starts with "rocket_"
+            # Process checkboxes for Rocket Pokémon
             elif checkbox_type.startswith('rocket_'):
                 rocket_pokemon = Rocket.query.filter_by(id=entity_id).first()
                 if rocket_pokemon:

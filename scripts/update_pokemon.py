@@ -94,11 +94,13 @@ def fetch_pokemon_data():
                 type=type_,
                 image_url=image_url_to_store,
                 user_1_living_dex=False,
-                user_1_shiny=False,  # NEW COLUMN DEFAULT VALUE
+                user_1_shiny=False,  # Brady's Shiny
                 user_1_lucky=False,
                 user_2_living_dex=False,
+                user_2_shiny=False,  # Matt's Shiny (NEW)
                 user_2_lucky=False,
                 user_0_living_dex=True,
+                user_0_shiny=False,  # iPad's Shiny (NEW)
                 user_0_lucky=False
             )
             db.session.add(pokemon)
@@ -115,7 +117,8 @@ def fetch_pokemon_data():
         pokemon.user_1_living_dex = False
         pokemon.user_1_shiny = False  # Reset Brady's shiny column
         pokemon.user_1_lucky = False
-        pokemon.user_0_living_dex = True
+        pokemon.user_2_shiny = False  # Reset Matt's shiny column (NEW)
+        pokemon.user_0_shiny = False  # Reset iPad's shiny column (NEW)
 
         # Fetch PokeGenie entries for this Pokémon
         poke_genie_entries = PokeGenieEntry.query.filter_by(pokemon_number=dex_number).all()
@@ -130,13 +133,21 @@ def fetch_pokemon_data():
             if entry.lucky == 0 and entry.shadow_purified == 0 and (entry.favorite == 0 or entry.favorite == 4):
                 pokemon.user_1_living_dex = True
 
-            # Brady's Shiny Dex logic (NEW LOGIC)
+            # Brady's Shiny Dex logic
             if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 1:
                 pokemon.user_1_shiny = True
+
+            # Matt's Shiny Dex logic (NEW)
+            if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 2:
+                pokemon.user_2_shiny = True
 
             # Brady's Lucky Dex logic
             if entry.lucky == 1 and entry.shadow_purified == 0 and entry.favorite == 0:
                 pokemon.user_1_lucky = True
+
+            # iPad's Shiny Dex logic (NEW)
+            if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 3:
+                pokemon.user_0_shiny = True
 
             # iPad's Living Dex logic
             if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 4:

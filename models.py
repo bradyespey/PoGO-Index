@@ -28,12 +28,14 @@ class Pokemon(db.Model):
 
     # Ownership fields for each user (Brady, Matt, iPad)
     user_1_living_dex = db.Column(db.Boolean, default=False)  # Brady's Living Dex
-    user_1_shiny = db.Column(db.Boolean, default=False)  # NEW COLUMN: Brady's Shiny Dex
+    user_1_shiny = db.Column(db.Boolean, default=False)  # Brady's Shiny Dex
     user_1_lucky = db.Column(db.Boolean, default=False)  # Brady's Lucky Dex
     user_2_living_dex = db.Column(db.Boolean, default=False)  # Matt's Living Dex
     user_2_lucky = db.Column(db.Boolean, default=False)  # Matt's Lucky Dex
+    user_2_shiny = db.Column(db.Boolean, default=False)  # NEW COLUMN: Matt's Shiny Dex
     user_0_living_dex = db.Column(db.Boolean, default=True)  # iPad's Living Dex (default Yes)
     user_0_lucky = db.Column(db.Boolean, default=False)  # iPad's Lucky Dex
+    user_0_shiny = db.Column(db.Boolean, default=False)  # NEW COLUMN: iPad's Shiny Dex
 
     # Relationship to OwnedPokemon
     owners = db.relationship('OwnedPokemon', backref='pokemon', lazy=True)

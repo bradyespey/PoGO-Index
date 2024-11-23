@@ -80,10 +80,18 @@
                         <input type="checkbox" id="selectAllMatt">
                     </th>
                     <th>
+                        <div>Matt ✨<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAllMattShiny">
+                    </th>
+                    <th>
                         <div>Matt 🎲<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
                         <input type="checkbox" id="selectAllMattLucky">
                     </th>
                     <th>iPad 👤</th>
+                    <th>
+                        <div>iPad ✨<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
+                        <input type="checkbox" id="selectAlliPadShiny">
+                    </th>
                     <th>
                         <div>iPad 🎲<span style="font-size: 0.8em; color: gray;">(Select All)</span></div>
                         <input type="checkbox" id="selectAlliPadLucky">
@@ -108,17 +116,17 @@
                     </td>
                     <td>{{ pokemon.name }}</td>
                     <td>{{ pokemon.type }}</td>
-
+        
                     <!-- Brady Living Dex -->
                     <td>{{ pokemon.brady_living_dex }}</td>
-
+        
                     <!-- Brady Shiny Dex -->
                     <td>{{ pokemon.brady_shiny_dex }}</td>
-
+        
                     <!-- Brady Lucky Dex -->
                     <td>{{ pokemon.brady_lucky_dex }}</td>
-
-                    <!-- Matt Living Dex (Checkbox for editable fields) -->
+        
+                    <!-- Matt Living Dex -->
                     <td data-filter="{{ 'Yes' if pokemon.matt_have == 'Yes' else 'No' }}">
                         {% if 'user' in session %}
                             <input type="checkbox" class="matt-have-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.matt_have == 'Yes' %}checked{% endif %}>
@@ -126,7 +134,17 @@
                             {{ pokemon.matt_have }}
                         {% endif %}
                     </td>
-
+        
+                    <!-- Matt Shiny Dex -->
+                    <td data-filter="{{ 'Yes' if pokemon.matt_shiny == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="matt-shiny-checkbox" data-pokemon-id="{{ pokemon.id }}" 
+                            {% if pokemon.matt_shiny == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ pokemon.matt_shiny }}
+                        {% endif %}
+                    </td>
+        
                     <!-- Matt Lucky Dex -->
                     <td data-filter="{{ 'Yes' if pokemon.matt_lucky == 'Yes' else 'No' }}">
                         {% if 'user' in session %}
@@ -135,10 +153,19 @@
                             {{ pokemon.matt_lucky }}
                         {% endif %}
                     </td>
-
-                    <!-- Need on iPad -->
+        
+                    <!-- iPad Living Dex -->
                     <td class="ipad-column">{{ pokemon.need_on_ipad }}</td>
-
+        
+                    <!-- iPad Shiny Dex -->
+                    <td data-filter="{{ 'Yes' if pokemon.ipad_shiny == 'Yes' else 'No' }}">
+                        {% if 'user' in session %}
+                            <input type="checkbox" class="ipad-shiny-checkbox" data-pokemon-id="{{ pokemon.id }}" {% if pokemon.ipad_shiny == 'Yes' %}checked{% endif %}>
+                        {% else %}
+                            {{ pokemon.ipad_shiny }}
+                        {% endif %}
+                    </td>
+        
                     <!-- iPad Lucky Dex -->
                     <td data-filter="{{ 'Yes' if pokemon.ipad_lucky_dex == 'Yes' else 'No' }}">
                         {% if 'user' in session %}
@@ -147,14 +174,14 @@
                             {{ pokemon.ipad_lucky_dex }}
                         {% endif %}
                     </td>
-
+        
                     <!-- Notes -->
                     <td>
                         <div class="note-display">{{ pokemon.note_text or '' }}</div>
                         <textarea class="note-edit form-control" style="display: none;">{{ pokemon.note_text or '' }}</textarea>
                         <div class="hidden-pokemon-id" data-pokemon-id="{{ pokemon.id }}" style="display:none;"></div>
                     </td>
-
+        
                     <!-- Hidden columns for filters -->
                     <td style="display: none;">{{ pokemon.legendary }}</td>
                     <td style="display: none;">{{ pokemon.mythical }}</td>
