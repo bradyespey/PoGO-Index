@@ -1,13 +1,39 @@
+/* static/styles.css */
+
 /* === Global Styles === */
 body {
-    background-color: #f8f9fa;
-    color: #212529;
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
+    background-color: #f8f9fa;
+    color: #212529;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* === Navbar Customization === */
+/* === Dark Mode Styles === */
+body.dark-mode {
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+}
+
+body.dark-mode .navbar-dark {
+    background-color: #3a3a3a;
+}
+
+body.dark-mode .navbar-dark .navbar-nav .nav-link {
+    color: #ffffff !important;
+}
+
+body.dark-mode .navbar-dark .navbar-nav .nav-link:hover {
+    color: #f1c40f !important;
+}
+
+body.dark-mode footer {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+}
+
+/* === Navbar Styles === */
 .navbar-brand .logo {
     height: 40px;
 }
@@ -37,40 +63,425 @@ body {
     width: 30px;
     height: 30px;
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28%20255,%20255,%20255,%201%20%29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4%207h22M4%2015h22M4%2023h22'/%3E%3C/svg%3E");
+    transition: background-image 0.2s ease;
 }
 
-.navbar-toggler:hover .navbar-toggler-icon {
+.navbar-dark .navbar-toggler-icon:hover {
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28%20241,%20196,%2015,%201%20%29' stroke-width='3' stroke-linecap='round' stroke-miterlimit='10' d='M4%207h22M4%2015h22M4%2023h22'/%3E%3C/svg%3E");
 }
 
-/* Navbar adjustments for responsiveness */
-@media (max-width: 992px) {
-    .navbar-nav .nav-link {
-        padding: 4px 8px;
-        font-size: 0.85rem;
-    }
-    .navbar-toggler-icon {
-        width: 25px;
-        height: 25px;
-    }
+/* === Button Styles === */
+.btn {
+    font-weight: bold;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin: 5px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    font-size: 14px;
+    line-height: 1.5;
+    display: inline-block;
+    width: auto;
 }
 
-@media (max-width: 576px) {
-    .navbar-nav {
+#saveAllChangesButton,
+#resetFiltersButton {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    width: auto;
+    margin: 5px;
+}
+
+#saveAllChangesButton {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+#saveAllChangesButton:hover {
+    background-color: #218838;
+    border-color: #218838;
+}
+
+#resetFiltersButton {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+#resetFiltersButton:hover {
+    background-color: #e0a800;
+    border-color: #e0a800;
+}
+
+/* === Custom Filters Layout === */
+.custom-filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+}
+
+.custom-filters .filter-group {
+    flex: 1;
+    min-width: 150px;
+    margin: 5px;
+}
+
+.custom-filters .btn-group {
+    display: flex;
+    align-items: flex-end;
+    margin: 5px;
+}
+
+.custom-filters .btn-group .btn {
+    margin-left: 0;
+    border-radius: 6px !important;
+}
+
+@media (max-width: 768px) {
+    .custom-filters {
         flex-direction: column;
         align-items: center;
     }
-    .navbar-nav .nav-link {
-        justify-content: center;
-        padding: 8px 0;
+
+    .custom-filters .btn-group {
+        flex-direction: column;
     }
-    .navbar-brand .logo {
+
+    #saveAllChangesButton,
+    #resetFiltersButton {
+        width: 100%;
+        font-size: 16px;
+        margin-left: 0;
+    }
+
+    .custom-filters .btn-group .btn {
+        margin: 5px 0;
+    }
+
+    /* Responsive table styles */
+    table.dataTable th,
+    table.dataTable td {
+        white-space: normal;
+    }
+
+    .btn {
+        font-size: 14px;
+    }
+
+    table.dataTable th,
+    table.dataTable thead th,
+    table.dataTable td {
+        padding: 5px;
+        font-size: 12px;
+    }
+
+    table.dataTable td img {
+        width: 30px;
         height: 30px;
     }
 }
 
+/* === Table Styles === */
+table.dataTable {
+    background-color: #ffffff;
+    color: #212529;
+    width: 100% !important;
+    margin: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode table.dataTable {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+}
+
+table.dataTable th,
+table.dataTable thead th,
+table.dataTable td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.dark-mode table.dataTable thead th {
+    background-color: #444444;
+    color: #ffffff;
+}
+
+body.dark-mode table.dataTable thead tr.clone th,
+body.dark-mode table.dataTable thead tr.clone th.filter-row {
+    background-color: #444444;
+}
+
+table.dataTable thead th {
+    background-color: #e9ecef;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+table.dataTable thead tr.clone th {
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 42px; /* Adjust based on header height */
+    z-index: 1;
+}
+
+body.dark-mode table.dataTable tbody tr {
+    background-color: #3a3a3a !important;
+}
+
+body.dark-mode table.dataTable tbody tr:nth-of-type(even) {
+    background-color: #3a3a3a !important;
+}
+
+body.dark-mode table.dataTable tbody tr:hover {
+    background-color: #505050 !important;
+}
+
+table.dataTable tbody tr:nth-of-type(even) {
+    background-color: #f8f9fa;
+}
+
+table.dataTable tbody tr:hover {
+    background-color: #dee2e6;
+}
+
+table.dataTable tbody tr td {
+    padding: 6px;
+}
+
+table.dataTable td img {
+    width: 50px;
+    height: 50px;
+}
+
+table.dataTable td.image-column {
+    width: 60px;
+}
+
+/* === Checkbox Alignment === */
+th .select-all-checkbox,
+table.dataTable thead tr.clone th .select-all-checkbox {
+    display: inline-block;
+    margin-left: 5px;
+    transform: scale(1.2);
+    vertical-align: middle;
+}
+
+/* === DataTables Filter Row Styles === */
+.filter-row th {
+    background-color: inherit; /* Inherit from parent */
+}
+
+body.dark-mode .filter-row th {
+    background-color: #444444;
+}
+
+.filter-row input,
+.filter-row select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px;
+    font-size: 0.9rem;
+    margin: 0;
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #dee2e6;
+}
+
+body.dark-mode .filter-row input,
+body.dark-mode .filter-row select {
+    background-color: #4d4d4d;
+    color: #e0e0e0;
+    border: 1px solid #666666;
+}
+
+/* === DataTables Search Input === */
+.dataTables_filter {
+    text-align: center;
+    margin-bottom: 10px;
+    border: none;
+}
+
+.dataTables_filter label {
+    font-weight: bold;
+}
+
+.dataTables_filter input {
+    margin-left: 5px;
+    border: none;
+    background-color: #ffffff;
+    box-shadow: none;
+    text-align: center;
+    width: auto;
+    display: inline-block;
+}
+
+body.dark-mode .dataTables_filter input {
+    background-color: #4d4d4d;
+    color: #e0e0e0;
+    border-color: #666666;
+}
+
+/* === DataTables Length Menu === */
+.dataTables_length {
+    float: none;
+    text-align: center;
+}
+
+.dataTables_length select {
+    width: auto;
+    display: inline-block;
+    margin-left: 5px;
+    padding: 4px;
+    font-size: 0.9rem;
+    border: 1px solid #dee2e6;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+body.dark-mode .dataTables_length select {
+    background-color: #4d4d4d;
+    color: #e0e0e0;
+    border: 1px solid #666666;
+}
+
+/* === Pagination Controls === */
+.dataTables_paginate {
+    margin-top: 10px;
+}
+
+/* Light Mode Pagination */
+.dataTables_paginate .paginate_button {
+    background-color: #ffffff;
+    color: #000000 !important;
+    border: 1px solid #dee2e6;
+    margin-left: 2px;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background-color: #e0e0e0;
+    color: #000000 !important;
+}
+
+.dataTables_paginate .paginate_button.current {
+    background-color: #007bff;
+    color: #ffffff !important;
+    border: 1px solid #007bff;
+}
+
+/* Dark Mode Pagination */
+body.dark-mode .dataTables_paginate .paginate_button {
+    background-color: #4d4d4d;
+    color: #e0e0e0 !important;
+    border: 1px solid #666666;
+}
+
+body.dark-mode .dataTables_paginate .paginate_button:hover {
+    background-color: #666666;
+    color: #ffffff !important;
+}
+
+body.dark-mode .dataTables_paginate .paginate_button.current {
+    background-color: #f1c40f !important; /* Bright Yellow */
+    color: #000000 !important; /* Black text for contrast */
+    border: 1px solid #f1c40f !important;
+}
+
+/* === Sorting Indicators === */
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_desc:after {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    display: inline-block;
+    margin-left: 5px;
+}
+
+table.dataTable thead .sorting:after {
+    content: "\f0dc"; /* Font Awesome icon for sort */
+}
+
+table.dataTable thead .sorting_asc:after {
+    content: "\f0de"; /* Font Awesome icon for sort-up */
+}
+
+table.dataTable thead .sorting_desc:after {
+    content: "\f0dd"; /* Font Awesome icon for sort-down */
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 768px) {
+    table.dataTable th,
+    table.dataTable td {
+        white-space: normal;
+    }
+    
+    .btn {
+        font-size: 14px;
+    }
+    
+    table.dataTable th,
+    table.dataTable thead th,
+    table.dataTable td {
+        padding: 5px;
+        font-size: 12px;
+    }
+    
+    table.dataTable td img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .custom-filters {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .custom-filters .btn-group {
+        flex-direction: column;
+    }
+    
+    #saveAllChangesButton,
+    #resetFiltersButton {
+        width: 100%;
+        font-size: 16px;
+        margin-left: 0;
+    }
+    
+    .custom-filters .btn-group .btn {
+        margin: 5px 0;
+    }
+}
+
+/* === Footer Styles === */
+footer {
+    background-color: #343a40;
+    color: #ffffff;
+    padding: 20px 0;
+    text-align: center;
+    margin-top: 40px;
+}
+
 /* === Headings and Counts === */
-h2, main h2 {
+h2,
+main h2 {
     color: #f1c40f;
     text-align: center;
     font-family: 'Poppins', sans-serif;
@@ -86,6 +497,7 @@ h2, main h2 {
     }
 }
 
+/* === Card Styles === */
 .card {
     border-radius: 10px;
 }
@@ -109,232 +521,34 @@ h2, main h2 {
     }
 }
 
-/* === Button Styling === */
-.btn {
-    font-weight: bold;
-    border-radius: 6px;
-    padding: 8px 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-#saveAllChangesButton {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-#saveAllChangesButton:hover {
-    background-color: #218838;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-#resetFiltersButton {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: black;
-}
-
-#resetFiltersButton:hover {
-    background-color: #e0a800;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.btn + .btn {
-    margin-left: 8px;
-}
-
-@media (max-width: 768px) {
-    .btn {
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 16px;
-    }
-}
-
-/* === Table Styles === */
-table.dataTable {
-    background-color: #ffffff;
-    color: #212529;
-    width: 100% !important;
-    margin: 0; /* Remove any outer margins */
-    table-layout: auto; /* Allow columns to adjust based on content */
-    border-collapse: collapse; /* Ensure cells are collapsed to prevent gaps */
-}
-
-/* Headers, Filters, and Cells */
-table.dataTable th, table.dataTable td {
-    border: 1px solid #dee2e6;
-    padding: 8px;
+/* === Additional Enhancements === */
+/* Centering Column Headers */
+table.dataTable th,
+table.dataTable thead th {
     text-align: center;
-    font-size: 0.9rem;
     vertical-align: middle;
 }
 
-table.dataTable thead th {
-    background-color: #e9ecef;
-    color: #495057;
+/* Align Filter Inputs Center */
+.filter-row th {
+    vertical-align: middle;
 }
 
-/* Filter Row Styling */
-table.dataTable thead tr.filters {
-    display: table-row !important;
-    background-color: #e9ecef;
-    border-top: none; /* Avoid extra gap above */
-    border-bottom: 2px solid #dee2e6;
-    padding: 0;
-    margin: 0;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-}
-
-table.dataTable thead th,
-table.dataTable thead tr.filters th {
-    padding: 8px;
-    background-color: #e9ecef;
-    border-bottom: 2px solid #dee2e6 !important;
-}
-
-table.dataTable thead tr.filters input,
-table.dataTable thead tr.filters select {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 4px;
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-table.dataTable thead {
-    display: table-header-group;
-    border-bottom: 0; /* Remove bottom border of the header */
-    padding: 0;
-    margin: 0;
-}
-
-table.dataTable tbody {
-    border-top: none !important; /* Remove border between header and body */
-    margin: 0;
-    padding: 0;
-}
-
-/* Row Alternation */
-table.dataTable tbody tr:nth-of-type(even) {
-    background-color: #f8f9fa;
-}
-
-table.dataTable tbody tr:hover {
-    background-color: #dee2e6;
-}
-
-table.dataTable tbody tr td {
-    padding: 6px; /* Reduce padding to minimize gaps */
-}
-
-table.dataTable td img {
-    width: 50px;
-    height: 50px;
-}
-
-/* Center checkboxes in header */
-th input[type="checkbox"] {
+.filter-row input,
+.filter-row select {
     margin: 0 auto;
     display: block;
 }
 
-/* Sorting Indicators */
-table.dataTable thead .sorting:before,
-table.dataTable thead .sorting:after,
-table.dataTable thead .sorting_asc:before,
-table.dataTable thead .sorting_desc:before {
-    content: "" !important;
+/* Adjust Note Textarea Width */
+.note-edit {
+    width: 100%;
+    resize: vertical;
 }
 
-table.dataTable thead .sorting_asc:after {
-    content: " ▲";
-}
-
-table.dataTable thead .sorting_desc:after {
-    content: " ▼";
-}
-
-/* === Responsive Adjustments === */
-.table-responsive {
+/* Style for N/A text in image column */
+.image-column span {
     display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-@media (max-width: 576px) {
-    table.dataTable th, table.dataTable td {
-        padding: 5px;
-        font-size: 12px;
-    }
-    table.dataTable td img {
-        width: 30px;
-        height: 30px;
-    }
-}
-
-.table-responsive .display.nowrap {
-    width: 100%;
-}
-
-@media (max-width: 768px) {
-    table.dataTable th, table.dataTable td {
-        white-space: normal;
-    }
-}
-
-/* === Preloader Styles === */
-#preloader {
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 9999;
-    width: 100%;
-    height: 100%;
-    background: #000000 url('/static/images/preloader.gif') no-repeat center center;
-}
-
-body.loaded #preloader {
-    display: none;
-}
-
-/* === Global DataTable Styling for All Tables === */
-table.dataTable th, 
-table.dataTable td {
-    width: auto;                /* Allow columns to auto-adjust their width */
-    white-space: nowrap;        /* Prevent text wrapping in cells */
-    text-align: center;         /* Center-align content for visual consistency */
-    padding: 8px;               /* Add padding for readability */
-}
-
-/* Input field styles in the header row for all DataTables */
-table.dataTable thead input {
-    width: 80% !important;      /* Set a narrower width for search inputs */
-    padding: 4px;               /* Consistent padding for input fields */
-    font-size: 12px;            /* Smaller font size for inputs in header */
-}
-
-/* Ensures DataTables take up full width within responsive containers */
-.table-responsive .display.nowrap {
-    width: 100%;                /* Make DataTables take full width of container */
-}
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-    table.dataTable th, 
-    table.dataTable td {
-        font-size: 0.8rem;      /* Smaller font size on smaller screens */
-        padding: 5px;           /* Reduced padding on smaller screens */
-    }
-}
-
-/* Consistent header styling for all DataTables */
-table.dataTable thead th {
-    background-color: #e9ecef;  /* Light background color for headers */
-    color: #495057;             /* Standard dark text color for headers */
-    font-weight: bold;          /* Bold header text */
+    text-align: center;
+    color: #888;
 }

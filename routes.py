@@ -69,10 +69,11 @@ def init_routes(app, google):
     # Pokémon page route
     @app.route('/pogo/pokemon')
     def pokemon():
+        # Fetch all Pokémon entries
         pokemon_list = Pokemon.query.all()
         extended_pokemon_list = []
 
-        # Fetch Matt's user (based on user_2_living_dex now)
+        # Fetch Matt's user based on email
         matt = User.query.filter_by(email='matt@example.com').first()  # Replace with Matt's actual email
 
         # Get the set of Pokémon IDs that Matt owns
@@ -80,63 +81,67 @@ def init_routes(app, google):
         if matt:
             matt_owned_ids = {op.pokemon_id for op in matt.owned_pokemon}
 
-        # Create a mapping from dex_number to category from AllPokemon table
+        # Create mappings from dex_number to category and generation from AllPokemon table
         all_pokemon_entries = AllPokemon.query.all()
         dex_to_category = {entry.dex_number: entry.category for entry in all_pokemon_entries}
+        dex_to_generation = {entry.dex_number: entry.generation for entry in all_pokemon_entries}
+
+        # Fetch distinct categories and generations for filter dropdowns
+        categories = sorted({entry.category for entry in all_pokemon_entries if entry.category})
+        generations = sorted({entry.generation for entry in all_pokemon_entries if entry.generation})
+        
+        # Fetch distinct types for filter dropdown
+        types = sorted({pokemon.type for pokemon in pokemon_list if pokemon.type})
 
         for pokemon in pokemon_list:
-            # Use the existing user-specific dex fields from the updated model
-            brady_living_dex = 'Yes' if pokemon.user_1_living_dex else 'No'
-            brady_shiny_dex = 'Yes' if pokemon.user_1_shiny else 'No'
-            brady_lucky_dex = 'Yes' if pokemon.user_1_lucky else 'No'
-            need_on_ipad = 'Yes' if pokemon.user_0_living_dex else 'No'
-            ipad_lucky_dex = 'Yes' if pokemon.user_0_lucky else 'No'
-            ipad_shiny_dex = 'Yes' if pokemon.user_0_shiny else 'No'  # NEW COLUMN LOGIC
+            # Updated user-specific dex fields
+            brady_living_dex = 'Yes' if pokemon.brady_living_dex else 'No'
+            brady_shiny_dex = 'Yes' if pokemon.brady_shiny else 'No'
+            brady_lucky_dex = 'Yes' if pokemon.brady_lucky else 'No'
+            need_on_ipad = 'Yes' if pokemon.ipad_living_dex else 'No'
+            ipad_lucky_dex = 'Yes' if pokemon.ipad_lucky else 'No'
+            ipad_shiny_dex = 'Yes' if pokemon.ipad_shiny else 'No'
 
-            # Matt's Have Living Dex Logic (user_2_living_dex is used now)
-            matt_have = 'Yes' if pokemon.user_2_living_dex else 'No'
-            matt_lucky = 'Yes' if pokemon.user_2_lucky else 'No'
-            matt_shiny = 'Yes' if pokemon.user_2_shiny else 'No'  # NEW COLUMN LOGIC
+            matt_have = 'Yes' if pokemon.matt_living_dex else 'No'
+            matt_lucky = 'Yes' if pokemon.matt_lucky else 'No'
+            matt_shiny = 'Yes' if pokemon.matt_shiny else 'No'
 
-            # Fetch category from AllPokemon
-            category = dex_to_category.get(pokemon.dex_number)
-            legendary, mythical, ultra_beast = 'No', 'No', 'No'
-            if category:
-                categories_list = [cat.strip() for cat in category.split(',')]
-                if 'Legendary' in categories_list:
-                    legendary = 'Yes'
-                if 'Mythical' in categories_list:
-                    mythical = 'Yes'
-                if 'Ultra Beast' in categories_list:
-                    ultra_beast = 'Yes'
+            # Fetch category and generation from AllPokemon
+            category = dex_to_category.get(pokemon.dex_number, 'Unknown')
+            generation = dex_to_generation.get(pokemon.dex_number, 'Unknown')
 
             # Note Text
-            note_entry = Note.query.filter_by(pokemon_id=pokemon.id).first()
-            note_text = note_entry.note_text if note_entry else ''
+            note_text = pokemon.notes if pokemon.notes else ''
 
             # Append extended data
             extended_pokemon_list.append({
                 'id': pokemon.id,
-                'dex_number': pokemon.dex_number,  # Include dex_number if needed
+                'dex_number': pokemon.dex_number,
                 'name': pokemon.name,
                 'type': pokemon.type,
                 'image_url': pokemon.image_url,
+                'shiny_released': 'Yes' if pokemon.shiny_released else 'No',
+                'notes': note_text,
                 'brady_living_dex': brady_living_dex,
                 'brady_shiny_dex': brady_shiny_dex,
                 'brady_lucky_dex': brady_lucky_dex,
                 'matt_have': matt_have,
                 'matt_lucky': matt_lucky,
-                'matt_shiny': matt_shiny,  # NEW COLUMN LOGIC
+                'matt_shiny': matt_shiny,
                 'need_on_ipad': need_on_ipad,
                 'ipad_lucky_dex': ipad_lucky_dex,
-                'ipad_shiny_dex': ipad_shiny_dex,  # NEW COLUMN LOGIC
-                'note_text': note_text,
-                'legendary': legendary,
-                'mythical': mythical,
-                'ultra_beast': ultra_beast,
+                'ipad_shiny_dex': ipad_shiny_dex,
+                'category': category,
+                'generation': generation,
             })
 
-        return render_template('pokemon.html', pokemon_list=extended_pokemon_list)
+        return render_template(
+            'pokemon.html',
+            pokemon_list=extended_pokemon_list,
+            categories=categories,
+            generations=generations,
+            types=types
+        )
     
     @app.route('/pogo/save-all-changes', methods=['POST'])
     @requires_auth
@@ -156,12 +161,9 @@ def init_routes(app, google):
             pokemon_id = note.get('pokemon_id')
             note_text = note.get('note')
             if pokemon_id:
-                existing_note = Note.query.filter_by(pokemon_id=pokemon_id).first()
-                if existing_note:
-                    existing_note.note_text = note_text  # Update existing note
-                else:
-                    new_note = Note(pokemon_id=pokemon_id, note_text=note_text)
-                    db.session.add(new_note)  # Add a new note if none exists
+                pokemon = Pokemon.query.filter_by(id=pokemon_id).first()
+                if pokemon:
+                    pokemon.notes = note_text  # Update the notes directly in the Pokemon table
 
         # === Process Checkbox Data ===
         for checkbox in data.get('checkboxes', []):
@@ -187,19 +189,19 @@ def init_routes(app, google):
                     db.session.add(shiny_pokemon)
 
             # Process checkboxes for normal Pokémon
-            elif checkbox_type in ['matt_lucky', 'matt_have', 'ipad_lucky', 'matt_shiny', 'ipad_shiny']:  # Added new types
+            elif checkbox_type in ['matt_lucky', 'matt_have', 'ipad_lucky', 'matt_shiny', 'ipad_shiny']:
                 pokemon = Pokemon.query.filter_by(id=entity_id).first()
                 if pokemon:
                     if checkbox_type == 'matt_lucky':
-                        pokemon.user_2_lucky = checked_value
+                        pokemon.matt_lucky = checked_value
                     elif checkbox_type == 'matt_have':
-                        pokemon.user_2_living_dex = checked_value
+                        pokemon.matt_living_dex = checked_value
                     elif checkbox_type == 'ipad_lucky':
-                        pokemon.user_0_lucky = checked_value
-                    elif checkbox_type == 'matt_shiny':  # New column
-                        pokemon.user_2_shiny = checked_value
-                    elif checkbox_type == 'ipad_shiny':  # New column
-                        pokemon.user_0_shiny = checked_value
+                        pokemon.ipad_lucky = checked_value
+                    elif checkbox_type == 'matt_shiny':
+                        pokemon.matt_shiny = checked_value
+                    elif checkbox_type == 'ipad_shiny':
+                        pokemon.ipad_shiny = checked_value
                     db.session.add(pokemon)
 
             # Process checkboxes for Costumes

@@ -22,24 +22,23 @@ class Pokemon(db.Model):
     __tablename__ = 'pokemon'
     id = db.Column(db.Integer, primary_key=True)
     dex_number = db.Column(db.Integer, unique=True, nullable=False)
-    name = db.Column(db.String(100))
-    type = db.Column(db.String(50))
-    image_url = db.Column(db.String(255))
-
-    # Ownership fields for each user (Brady, Matt, iPad)
-    user_1_living_dex = db.Column(db.Boolean, default=False)  # Brady's Living Dex
-    user_1_shiny = db.Column(db.Boolean, default=False)  # Brady's Shiny Dex
-    user_1_lucky = db.Column(db.Boolean, default=False)  # Brady's Lucky Dex
-    user_2_living_dex = db.Column(db.Boolean, default=False)  # Matt's Living Dex
-    user_2_lucky = db.Column(db.Boolean, default=False)  # Matt's Lucky Dex
-    user_2_shiny = db.Column(db.Boolean, default=False)  # NEW COLUMN: Matt's Shiny Dex
-    user_0_living_dex = db.Column(db.Boolean, default=True)  # iPad's Living Dex (default Yes)
-    user_0_lucky = db.Column(db.Boolean, default=False)  # iPad's Lucky Dex
-    user_0_shiny = db.Column(db.Boolean, default=False)  # NEW COLUMN: iPad's Shiny Dex
-
-    # Relationship to OwnedPokemon
-    owners = db.relationship('OwnedPokemon', backref='pokemon', lazy=True)
-
+    name = db.Column(db.String(100), nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)
+    type = db.Column(db.String(50), nullable=True)  # Hidden in HTML
+    shiny_released = db.Column(db.Boolean, default=False, nullable=True)  # Hidden in HTML
+    notes = db.Column(db.Text, default="", nullable=True)  # Plans to change notes to save here
+    
+    # Ownership tracking fields
+    brady_living_dex = db.Column(db.Boolean, default=False, nullable=True)
+    brady_shiny = db.Column(db.Boolean, default=False, nullable=True)
+    brady_lucky = db.Column(db.Boolean, default=False, nullable=True)
+    matt_living_dex = db.Column(db.Boolean, default=False, nullable=True)
+    matt_shiny = db.Column(db.Boolean, default=False, nullable=True)
+    matt_lucky = db.Column(db.Boolean, default=False, nullable=True)
+    ipad_living_dex = db.Column(db.Boolean, default=True, nullable=True)
+    ipad_shiny = db.Column(db.Boolean, default=False, nullable=True)
+    ipad_lucky = db.Column(db.Boolean, default=False, nullable=True)
+    
     def __repr__(self):
         return f"<Pokemon {self.dex_number} - {self.name}>"
 

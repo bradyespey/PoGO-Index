@@ -11,8 +11,8 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from app import app, db
 
 # User-defined variables
-TABLE_TO_OUTPUT = 'all'  # Set to 'all' or specific table name
-NUM_ROWS_TO_OUTPUT = '1'  # Set to 'all' or integer number of rows as a string
+TABLE_TO_OUTPUT = 'all_pokemon'  # Set to 'all' or specific table name
+NUM_ROWS_TO_OUTPUT = '10'  # Set to 'all' or integer number of rows as a string
 
 def check_table_entries():
     with app.app_context():

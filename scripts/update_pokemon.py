@@ -18,19 +18,6 @@ FORMS_TO_SKIP = [" Mega ", " Alolan ", " Galarian ", " Hisuian "]
 def fetch_pokemon_data():
     print("Fetching and updating Pokémon data...")
 
-    # Determine the image directory based on environment
-    if os.environ.get("DYNO"):
-        # Running on Heroku
-        local_image_dir = '/tmp/mons'
-        relative_image_url_base = '/tmp'  # Temporary directory for Heroku
-    else:
-        # Running locally
-        local_image_dir = '/Users/bradyespey/Projects/GitHub/PoGO/static/images/mons'
-        relative_image_url_base = '/static/images/mons'
-    
-    # Ensure image directory exists
-    os.makedirs(local_image_dir, exist_ok=True)  
-
     # Scrape Pokémon data
     url = "https://pokemondb.net/go/pokedex"
     try:
@@ -64,26 +51,10 @@ def fetch_pokemon_data():
             print(f"Skipping form {name}")
             continue
 
-        # Construct image filename and paths
+        # Construct remote image URL
         image_filename = f"{name.lower().replace(' ', '-').replace(':', '')}.png"
-        local_image_path = os.path.join(local_image_dir, image_filename)
-        relative_image_url = f"{relative_image_url_base}/{image_filename}"
-        
-        # Download image if it doesn't exist
-        if not os.path.exists(local_image_path):
-            image_url = f"https://img.pokemondb.net/sprites/go/normal/{image_filename}"
-            try:
-                img_data = requests.get(image_url).content
-                with open(local_image_path, 'wb') as img_file:
-                    img_file.write(img_data)
-                print(f"Downloaded image for {name}")
-                count_with_images += 1
-            except requests.RequestException:
-                print(f"Failed to download image for {name}")
-        
-        # Update database with image URL
-        image_url_to_store = relative_image_url if not os.environ.get("DYNO") else None
-        
+        remote_image_url = f"https://img.pokemondb.net/sprites/scarlet-violet/icon/{image_filename}"
+
         # Fetch or create Pokémon entry in the database
         pokemon = Pokemon.query.filter_by(dex_number=dex_number).first()
         if not pokemon:
@@ -92,33 +63,36 @@ def fetch_pokemon_data():
                 dex_number=dex_number,
                 name=name,
                 type=type_,
-                image_url=image_url_to_store,
-                user_1_living_dex=False,
-                user_1_shiny=False,  # Brady's Shiny
-                user_1_lucky=False,
-                user_2_living_dex=False,
-                user_2_shiny=False,  # Matt's Shiny (NEW)
-                user_2_lucky=False,
-                user_0_living_dex=True,
-                user_0_shiny=False,  # iPad's Shiny (NEW)
-                user_0_lucky=False
+                image_url=remote_image_url,
+                shiny_released=False,  # Default value, will be updated later
+                notes='',  # Default value, can be updated later
+                brady_living_dex=False,
+                brady_shiny=False,  # Brady's Shiny
+                brady_lucky=False,
+                matt_living_dex=False,
+                matt_shiny=False,  # Matt's Shiny (NEW)
+                matt_lucky=False,
+                ipad_living_dex=True,
+                ipad_shiny=False,  # iPad's Shiny (NEW)
+                ipad_lucky=False
             )
             db.session.add(pokemon)
             count_inserted += 1
         else:
             # Update image URL if it has changed
-            if pokemon.image_url != image_url_to_store:
-                pokemon.image_url = image_url_to_store
+            if pokemon.image_url != remote_image_url:
+                pokemon.image_url = remote_image_url
                 count_updated += 1
             else:
                 count_skipped += 1
 
-        # Default fields as specified
-        pokemon.user_1_living_dex = False
-        pokemon.user_1_shiny = False  # Reset Brady's shiny column
-        pokemon.user_1_lucky = False
-        pokemon.user_2_shiny = False  # Reset Matt's shiny column (NEW)
-        pokemon.user_0_shiny = False  # Reset iPad's shiny column (NEW)
+            # Reset user-specific dex fields
+            pokemon.brady_living_dex = False
+            pokemon.brady_shiny = False  # Reset Brady's shiny column
+            pokemon.brady_lucky = False
+            pokemon.matt_shiny = False  # Reset Matt's shiny column (NEW)
+            pokemon.ipad_shiny = False  # Reset iPad's shiny column (NEW)
+            # Note: Keeping 'shiny_released' and 'notes' unchanged during update
 
         # Fetch PokeGenie entries for this Pokémon
         poke_genie_entries = PokeGenieEntry.query.filter_by(pokemon_number=dex_number).all()
@@ -131,38 +105,104 @@ def fetch_pokemon_data():
 
             # Brady's Living Dex logic
             if entry.lucky == 0 and entry.shadow_purified == 0 and (entry.favorite == 0 or entry.favorite == 4):
-                pokemon.user_1_living_dex = True
+                pokemon.brady_living_dex = True
 
             # Brady's Shiny Dex logic
             if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 1:
-                pokemon.user_1_shiny = True
+                pokemon.brady_shiny = True
 
             # Matt's Shiny Dex logic (NEW)
             if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 2:
-                pokemon.user_2_shiny = True
+                pokemon.matt_shiny = True
 
             # Brady's Lucky Dex logic
             if entry.lucky == 1 and entry.shadow_purified == 0 and entry.favorite == 0:
-                pokemon.user_1_lucky = True
+                pokemon.brady_lucky = True
 
             # iPad's Shiny Dex logic (NEW)
             if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 3:
-                pokemon.user_0_shiny = True
+                pokemon.ipad_shiny = True
 
             # iPad's Living Dex logic
             if entry.lucky == 0 and entry.shadow_purified == 0 and entry.favorite == 4:
-                pokemon.user_0_living_dex = False
+                pokemon.ipad_living_dex = False
 
         # Commit changes for each Pokémon to the database
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Failed to commit changes for Pokémon {name} (Dex {dex_number}): {e}")
+            continue
 
     # Final output
     print(f"Finished processing {len(rows)} Pokémon")
     print(f"Total Pokémon added: {count_inserted}")
     print(f"Total Pokémon updated: {count_updated}")
     print(f"Total Pokémon skipped: {count_skipped}")
-    print(f"Total Pokémon with images: {count_with_images}")
+    print(f"Total Pokémon with image URL updates: {count_with_images}")
+
+def update_shiny_released():
+    print("Updating shiny_released status based on Serebii shiny list...")
+
+    url = "https://www.serebii.net/pokemongo/shiny.shtml"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        print(f"Fetched shiny data from {url} successfully.")
+    except requests.RequestException as e:
+        print(f"Error fetching shiny data from {url}: {e}")
+        return
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    tables = soup.find_all("table")
+
+    if len(tables) < 2:
+        print("Expected at least 2 tables on the shiny page.")
+        return
+
+    shiny_table = tables[1]  # Assuming the second table contains shiny data
+    rows = shiny_table.find_all("tr")[1:]  # Skip the header row
+    print(f"Found {len(rows)} Shiny Pokémon entries.")
+
+    shiny_dex_numbers = set()
+
+    for row in rows:
+        cols = row.find_all("td", recursive=False)
+
+        if len(cols) < 5:
+            continue
+
+        dex_number_text = cols[0].get_text(strip=True).replace('#', '')
+        if not dex_number_text.isdigit():
+            print(f"Invalid dex number '{dex_number_text}' found. Skipping row.")
+            continue
+        dex_number = int(dex_number_text)
+        shiny_dex_numbers.add(dex_number)
+
+    # Reset all shiny_released to False
+    try:
+        Pokemon.query.update({Pokemon.shiny_released: False})
+        db.session.commit()
+        print("Reset shiny_released for all Pokémon to False.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error resetting shiny_released: {e}")
+        return
+
+    # Set shiny_released to True for Pokémon in the shiny_dex_numbers set
+    try:
+        updated_count = Pokemon.query.filter(Pokemon.dex_number.in_(shiny_dex_numbers)).update(
+            {Pokemon.shiny_released: True},
+            synchronize_session=False
+        )
+        db.session.commit()
+        print(f"Set shiny_released to True for {updated_count} Pokémon.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating shiny_released: {e}")
 
 if __name__ == "__main__":
     with app.app_context():
         fetch_pokemon_data()
+        update_shiny_released()
