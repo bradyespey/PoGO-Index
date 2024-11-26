@@ -1,3 +1,5 @@
+# scripts/update_specials.py
+
 import os
 import sys
 from pathlib import Path

@@ -1,3 +1,5 @@
+# scripts/run_heroku_scripts.py
+
 import os
 import subprocess
 

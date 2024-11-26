@@ -1,4 +1,5 @@
-# Import necessary libraries and modules
+# scripts/update_pokemon.py
+
 import os
 import sys
 from pathlib import Path

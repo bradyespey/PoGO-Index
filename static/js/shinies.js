@@ -1,3 +1,5 @@
+// static/js/shinies.js
+
 $(document).ready(function () {
     let hasChanges = false; // Track if changes were made
 

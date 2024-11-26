@@ -1,3 +1,5 @@
+# scripts/reset_tables.py
+
 import os
 import sys
 from pathlib import Path

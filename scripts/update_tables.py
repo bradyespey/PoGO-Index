@@ -1,3 +1,5 @@
+# scripts/update_tables.py
+
 import os
 import sys
 import subprocess

@@ -1,3 +1,5 @@
+# scripts/update_poke_genie.py
+
 import os
 import sys
 from pathlib import Path

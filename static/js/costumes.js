@@ -1,3 +1,5 @@
+// static/js/costumes.js
+
 $(document).ready(function () {
     let hasChanges = false;
 

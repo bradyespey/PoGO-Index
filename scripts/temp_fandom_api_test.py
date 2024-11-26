@@ -1,3 +1,5 @@
+# scripts/temp_fandom_api_test.py
+
 import requests
 from bs4 import BeautifulSoup
 

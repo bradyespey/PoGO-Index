@@ -1,3 +1,5 @@
+# scripts/reset_migration_history.py
+
 import sys
 from pathlib import Path
 

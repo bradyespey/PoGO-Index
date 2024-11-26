@@ -1,3 +1,5 @@
+# scripts/update_rocket.py
+
 import os
 import sys
 from pathlib import Path

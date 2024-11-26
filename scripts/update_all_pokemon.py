@@ -1,3 +1,5 @@
+# scripts/update_all_pokemon.py
+
 import os
 import sys
 from pathlib import Path

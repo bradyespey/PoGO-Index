@@ -1,3 +1,5 @@
+# scripts/update_users.py
+
 import sys
 from pathlib import Path
 

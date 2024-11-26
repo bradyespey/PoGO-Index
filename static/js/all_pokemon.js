@@ -1,3 +1,5 @@
+// static/js/all_pokemon.js
+
 $(document).ready(function () {
     // === DATA TABLE INITIALIZATION AND FILTERING ===
 

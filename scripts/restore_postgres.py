@@ -1,3 +1,5 @@
+# scripts/restore_postgres.py
+
 import os
 import subprocess
 from google.oauth2.service_account import Credentials

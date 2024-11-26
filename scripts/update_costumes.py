@@ -1,3 +1,5 @@
+# scripts/update_cosutmes.py
+
 import os
 import sys
 from pathlib import Path

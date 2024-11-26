@@ -1,3 +1,5 @@
+# scripts/temp_fandom_api_db.py
+
 import os
 import sys
 from pathlib import Path

@@ -1,3 +1,5 @@
+# scripts/temp_fandom_api_print.py
+
 import fandom
 import re
 from pprint import pprint
